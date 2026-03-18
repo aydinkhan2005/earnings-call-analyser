@@ -5,6 +5,9 @@ from pathlib import Path
 from speech_parser.speech_isolator import get_speech
 
 
+ROOT = Path(__file__).resolve().parents[2]
+
+
 @pytest.fixture
 def sample_transcript() -> pd.DataFrame:
     return pd.DataFrame(
@@ -207,7 +210,7 @@ def test_content_line_with_bracket_number_is_not_treated_as_speaker_row():
     ],
 )
 def test_correct_rows_returned_from_real_transcript(file_path, speaker_1, speaker_2, expected_lines):
-    text = Path(file_path).read_text(encoding="utf-8", errors="replace")
+    text = (ROOT / file_path).read_text(encoding="utf-8", errors="replace")
     transcript = pd.DataFrame({"line": text.splitlines()})
 
     result = get_speech(transcript, speaker_1, speaker_2)
