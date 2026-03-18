@@ -284,7 +284,7 @@ def parse_transcript_to_json(transcript_path: str | Path, output_dir: str | Path
         "Year": year,
         "Quarter": quarter,
         "Corporate": corporate,
-        "Analysts": analysts,
+        "Conference": analysts,
         "presentation": presentation,
         "qa": qa,
     }

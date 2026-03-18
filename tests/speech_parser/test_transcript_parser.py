@@ -152,7 +152,7 @@ def test_parse_transcript_to_json_wraps_speech_isolation_errors(tmp_path, minima
         tp.parse_transcript_to_json(transcript_path)
 
 
-def test_parse_transcript_to_json_writes_non_empty_corporate_and_analysts(tmp_path):
+def test_parse_transcript_to_json_writes_non_empty_corporate_and_conference(tmp_path):
     transcript_path = ROOT / "data/Transcripts/AAPL/2016-Apr-26-AAPL.txt"
 
     output_path = tp.parse_transcript_to_json(transcript_path, output_dir=tmp_path)
@@ -161,7 +161,7 @@ def test_parse_transcript_to_json_writes_non_empty_corporate_and_analysts(tmp_pa
         data = json.load(f)
 
     assert len(data["Corporate"]) > 0
-    assert len(data["Analysts"]) > 0
+    assert len(data["Conference"]) > 0
 
 
 def test_extract_corporate_participants_correctness_case_1_placeholder():
@@ -223,20 +223,192 @@ def test_extract_conference_participants_correctness_case_1_placeholder():
 
 
 def test_extract_conference_participants_correctness_case_2_placeholder():
-    transcript_path = ROOT / "data/Transcripts/AAPL/2016-Apr-26-AAPL.txt"
+    transcript_path = ROOT / "data/Transcripts/AMZN/2017-Apr-27-AMZN.txt"
     text = transcript_path.read_text(encoding="utf-8", errors="replace")
     transcript_df = pd.DataFrame({"line": text.splitlines()})
 
     expected_conference = [
-        ("Katy Huberty", "Morgan Stanley", "Analyst"),
-        ("Gene Munster", "Piper Jaffray & Co.", "Analyst"),
-        ("Rod Hall", "JPMorgan", "Analyst"),
-        ("Shannon Cross", "Cross Research", "Analyst"),
-        ("Toni Sacconaghi", "Bernstein", "Analyst"),
-        ("Simona Jankowski", "Goldman Sachs", "Analyst"),
-        ("Steve Milunovich", "UBS", "Analyst"),
+        ("Heath P. Terry", "Goldman Sachs Group Inc., Research Division", "MD"),
+        ("Ronald V. Josey", "JMP Securities LLC, Research Division", "MD and Senior Research Analyst"),
+        ("Stephen D. Ju", "Credit Suisse AG, Research Division", "Director"),
+        ("Eric James Sheridan", "UBS Investment Bank, Research Division", "MD and Equity Research Internet Analyst"),
+        (
+            "Gregory Scott Melich",
+            "Evercore ISI, Research Division",
+            "Senior MD, Head of Consumer Research Team and Senior Equity Research Analyst",
+        ),
+        ("Jason Stuart Helfstein", "Oppenheimer & Co. Inc., Research Division", "MD and Senior Internet Analyst"),
+        ("Daniel Salmon", "BMO Capital Markets Equity Research", "Media and Internet Analyst"),
+        ("Justin Post", "BofA Merrill Lynch, Research Division", "MD"),
+        ("Brian Thomas Nowak", "Morgan Stanley, Research Division", "Research Analyst"),
+        ("Douglas Till Anmuth", "JP Morgan Chase & Co, Research Division", "MD"),
+        ("Mark S. Mahaney", "RBC Capital Markets, LLC, Research Division", "MD and Analyst"),
+        ("Colin Alan Sebastian", "Robert W. Baird & Co. Incorporated, Research Division", "Senior Research Analyst"),
+        ("Mark Alan May", "Citigroup Inc, Research Division", "Director and Senior Analyst"),
+        ("Scott W. Devitt", "Stifel, Nicolaus & Company, Incorporated, Research Division", "MD"),
     ]
 
     assert tp._extract_conference_participants(transcript_df) == expected_conference
 
 
+def test_extract_speaker_tuples_correctness_case_1_placeholder():
+    transcript_path = ROOT / "data/Transcripts/ASML/2016-Oct-19-ASML.txt"
+    text = transcript_path.read_text(encoding="utf-8", errors="replace")
+    transcript_df = pd.DataFrame({"line": text.splitlines()})
+
+    expected_speaker_tuples = [
+        ("Operator", "", ""),
+        ("Craig DeYoung", "ASML Holdings NV", "VP IR & Corporate Communications"),
+        ("Peter Wennink", "ASML Holdings NV", "President & CEO"),
+        ("Wolfgang Nickl", "ASML Holdings NV", "EVP & CFO"),
+        ("Peter Wennink", "ASML Holdings NV", "President & CEO"),
+        ("Craig DeYoung", "ASML Holdings NV", "VP IR & Corporate Communications"),
+        ("Operator", "", ""),
+        ("Sandeep Deshpande", "JPMorgan", "Analyst"),
+        ("Peter Wennink", "ASML Holdings NV", "President & CEO"),
+        ("Sandeep Deshpande", "JPMorgan", "Analyst"),
+        ("Peter Wennink", "ASML Holdings NV", "President & CEO"),
+        ("Sandeep Deshpande", "JPMorgan", "Analyst"),
+        ("Operator", "", ""),
+        ("C.J. Muse", "Evercore ISI", "Analyst"),
+        ("Wolfgang Nickl", "ASML Holdings NV", "EVP & CFO"),
+        ("C.J. Muse", "Evercore ISI", "Analyst"),
+        ("Peter Wennink", "ASML Holdings NV", "President & CEO"),
+        ("C.J. Muse", "Evercore ISI", "Analyst"),
+        ("Operator", "", ""),
+        ("Kai Korschelt", "BofA Merrill Lynch", "Analyst"),
+        ("Peter Wennink", "ASML Holdings NV", "President & CEO"),
+        ("Kai Korschelt", "BofA Merrill Lynch", "Analyst"),
+        ("Operator", "", ""),
+        ("Timothy Arcuri", "Cowen and Company", "Analyst"),
+        ("Wolfgang Nickl", "ASML Holdings NV", "EVP & CFO"),
+        ("Timothy Arcuri", "Cowen and Company", "Analyst"),
+        ("Wolfgang Nickl", "ASML Holdings NV", "EVP & CFO"),
+        ("Timothy Arcuri", "Cowen and Company", "Analyst"),
+        ("Operator", "", ""),
+        ("Andrew Gardiner", "Barclays", "Analyst"),
+        ("Peter Wennink", "ASML Holdings NV", "President & CEO"),
+        ("Wolfgang Nickl", "ASML Holdings NV", "EVP & CFO"),
+        ("Peter Wennink", "ASML Holdings NV", "President & CEO"),
+        ("Andrew Gardiner", "Barclays", "Analyst"),
+        ("Peter Wennink", "ASML Holdings NV", "President & CEO"),
+        ("Andrew Gardiner", "Barclays", "Analyst"),
+        ("Operator", "", ""),
+        ("Gareth Jenkins", "UBS", "Analyst"),
+        ("Wolfgang Nickl", "ASML Holdings NV", "EVP & CFO"),
+        ("Peter Wennink", "ASML Holdings NV", "President & CEO"),
+        ("Gareth Jenkins", "UBS", "Analyst"),
+        ("Peter Wennink", "ASML Holdings NV", "President & CEO"),
+        ("Wolfgang Nickl", "ASML Holdings NV", "EVP & CFO"),
+        ("Gareth Jenkins", "UBS", "Analyst"),
+        ("Operator", "", ""),
+        ("Patrick Ho", "Stifel Nicolaus & Company, Inc.", "Analyst"),
+        ("Peter Wennink", "ASML Holdings NV", "President & CEO"),
+        ("Patrick Ho", "Stifel Nicolaus & Company, Inc.", "Analyst"),
+        ("Peter Wennink", "ASML Holdings NV", "President & CEO"),
+        ("Patrick Ho", "Stifel Nicolaus & Company, Inc.", "Analyst"),
+        ("Operator", "", ""),
+        ("Amit Ramchandani", "Citigroup", "Analyst"),
+        ("Peter Wennink", "ASML Holdings NV", "President & CEO"),
+        ("Wolfgang Nickl", "ASML Holdings NV", "EVP & CFO"),
+        ("Amit Ramchandani", "Citigroup", "Analyst"),
+        ("Wolfgang Nickl", "ASML Holdings NV", "EVP & CFO"),
+        ("Peter Wennink", "ASML Holdings NV", "President & CEO"),
+        ("Amit Ramchandani", "Citigroup", "Analyst"),
+        ("Operator", "", ""),
+        ("Farhan Ahmad", "Credit Suisse", "Analyst"),
+        ("Peter Wennink", "ASML Holdings NV", "President & CEO"),
+        ("Amit Ramchandani", "Citigroup", "Analyst"),
+        ("Peter Wennink", "ASML Holdings NV", "President & CEO"),
+        ("Amit Ramchandani", "Citigroup", "Analyst"),
+        ("Craig DeYoung", "ASML Holdings NV", "VP IR & Corporate Communications"),
+        ("Operator", "", ""),
+        ("Francois Meunier", "Morgan Stanley", "Analyst"),
+        ("Wolfgang Nickl", "ASML Holdings NV", "EVP & CFO"),
+        ("Peter Wennink", "ASML Holdings NV", "President & CEO"),
+        ("Francois Meunier", "Morgan Stanley", "Analyst"),
+        ("Craig DeYoung", "ASML Holdings NV", "VP IR & Corporate Communications"),
+        ("Operator", "", ""),
+    ]
+    expected_marker_numbers = [1, 2, 3, 4, 5] + list(range(1, 68))
+
+    speaker_tuples, marker_numbers = tp._extract_speaker_tuples(transcript_df)
+
+    assert speaker_tuples == expected_speaker_tuples
+    assert marker_numbers == expected_marker_numbers
+
+
+def test_extract_speaker_tuples_correctness_case_2_placeholder():
+    transcript_path = ROOT / "data/Transcripts/CSCO/2020-Aug-12-CSCO.txt"
+    text = transcript_path.read_text(encoding="utf-8", errors="replace")
+    transcript_df = pd.DataFrame({"line": text.splitlines()})
+
+    expected_speaker_tuples = [
+        ("Operator", "", ""),
+        ("Marilyn Mora", "Cisco Systems, Inc.", "Director of Global IR"),
+        ("Charles H. Robbins", "Cisco Systems, Inc.", "Chairman & CEO"),
+        ("Kelly A. Kramer", "Cisco Systems, Inc.", "Executive VP & CFO"),
+        ("Marilyn Mora", "Cisco Systems, Inc.", "Director of Global IR"),
+        ("Operator", "", ""),
+        ("Ahmed Sami Badri", "Crédit Suisse AG, Research Division", "Senior Analyst"),
+        ("Charles H. Robbins", "Cisco Systems, Inc.", "Chairman & CEO"),
+        ("Operator", "", ""),
+        ("Meta A. Marshall", "Morgan Stanley, Research Division", "VP"),
+        ("Charles H. Robbins", "Cisco Systems, Inc.", "Chairman & CEO"),
+        ("Operator", "", ""),
+        ("Ittai Kidron", "Oppenheimer & Co. Inc., Research Division", "MD"),
+        ("Charles H. Robbins", "Cisco Systems, Inc.", "Chairman & CEO"),
+        ("Operator", "", ""),
+        ("James Dickey Suva", "Citigroup Inc., Research Division", "MD & Research Analyst"),
+        ("Charles H. Robbins", "Cisco Systems, Inc.", "Chairman & CEO"),
+        ("Kelly A. Kramer", "Cisco Systems, Inc.", "Executive VP & CFO"),
+        ("James Dickey Suva", "Citigroup Inc., Research Division", "MD & Research Analyst"),
+        ("Kelly A. Kramer", "Cisco Systems, Inc.", "Executive VP & CFO"),
+        ("Operator", "", ""),
+        ("Paul Jonas Silverstein", "Cowen and Company, LLC, Research Division", "MD & Senior Research Analyst"),
+        ("Charles H. Robbins", "Cisco Systems, Inc.", "Chairman & CEO"),
+        ("Kelly A. Kramer", "Cisco Systems, Inc.", "Executive VP & CFO"),
+        ("Paul Jonas Silverstein", "Cowen and Company, LLC, Research Division", "MD & Senior Research Analyst"),
+        ("Kelly A. Kramer", "Cisco Systems, Inc.", "Executive VP & CFO"),
+        ("Operator", "", ""),
+        ("Roderick B. Hall", "Goldman Sachs Group, Inc., Research Division", "MD"),
+        ("Charles H. Robbins", "Cisco Systems, Inc.", "Chairman & CEO"),
+        ("Kelly A. Kramer", "Cisco Systems, Inc.", "Executive VP & CFO"),
+        ("Roderick B. Hall", "Goldman Sachs Group, Inc., Research Division", "MD"),
+        ("Charles H. Robbins", "Cisco Systems, Inc.", "Chairman & CEO"),
+        ("Marilyn Mora", "Cisco Systems, Inc.", "Director of Global IR"),
+        ("Roderick B. Hall", "Goldman Sachs Group, Inc., Research Division", "MD"),
+        ("Charles H. Robbins", "Cisco Systems, Inc.", "Chairman & CEO"),
+        ("Operator", "", ""),
+        ("Simon Matthew Leopold", "Raymond James & Associates, Inc., Research Division", "Research Analyst"),
+        ("Kelly A. Kramer", "Cisco Systems, Inc.", "Executive VP & CFO"),
+        ("Simon Matthew Leopold", "Raymond James & Associates, Inc., Research Division", "Research Analyst"),
+        ("Charles H. Robbins", "Cisco Systems, Inc.", "Chairman & CEO"),
+        ("Kelly A. Kramer", "Cisco Systems, Inc.", "Executive VP & CFO"),
+        ("Charles H. Robbins", "Cisco Systems, Inc.", "Chairman & CEO"),
+        ("Operator", "", ""),
+        ("James Edward Fish", "Piper Sandler & Co., Research Division", "VP & Senior Research Analyst"),
+        ("Kelly A. Kramer", "Cisco Systems, Inc.", "Executive VP & CFO"),
+        ("James Edward Fish", "Piper Sandler & Co., Research Division", "VP & Senior Research Analyst"),
+        ("Charles H. Robbins", "Cisco Systems, Inc.", "Chairman & CEO"),
+        ("Kelly A. Kramer", "Cisco Systems, Inc.", "Executive VP & CFO"),
+        ("James Edward Fish", "Piper Sandler & Co., Research Division", "VP & Senior Research Analyst"),
+        ("Kelly A. Kramer", "Cisco Systems, Inc.", "Executive VP & CFO"),
+        ("Operator", "", ""),
+        ("Jeffrey Thomas Kvaal", "Wolfe Research, LLC", "Research Analyst"),
+        ("Charles H. Robbins", "Cisco Systems, Inc.", "Chairman & CEO"),
+        ("Kelly A. Kramer", "Cisco Systems, Inc.", "Executive VP & CFO"),
+        ("Operator", "", ""),
+        ("George Charles Notter", "Jefferies LLC, Research Division", "MD & Equity Research Analyst"),
+        ("Charles H. Robbins", "Cisco Systems, Inc.", "Chairman & CEO"),
+        ("Marilyn Mora", "Cisco Systems, Inc.", "Director of Global IR"),
+        ("Charles H. Robbins", "Cisco Systems, Inc.", "Chairman & CEO"),
+        ("Marilyn Mora", "Cisco Systems, Inc.", "Director of Global IR"),
+        ("Operator", "", ""),
+    ]
+    expected_marker_numbers = [1, 2, 3, 4, 5] + list(range(1, 57))
+
+    speaker_tuples, marker_numbers = tp._extract_speaker_tuples(transcript_df)
+
+    assert speaker_tuples == expected_speaker_tuples
+    assert marker_numbers == expected_marker_numbers
