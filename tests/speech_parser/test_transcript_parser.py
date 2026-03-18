@@ -43,6 +43,30 @@ def test_extract_header_metadata_rejects_non_string():
         tp._extract_header_metadata(2024)
 
 
+@pytest.mark.parametrize(
+    "header_text, expected",
+    [
+        ("q2 2016 Apple Inc earnings call", ("Apple Inc", "2016", "2")),
+        ("Q3 2020 L'Oréal Earnings Call", ("L'Oréal", "2020", "3")),
+    ],
+)
+def test_extract_header_metadata_edge_cases_valid(header_text, expected):
+    assert tp._extract_header_metadata(header_text) == expected
+
+
+@pytest.mark.parametrize(
+    "bad_header",
+    [
+        "Q2-2016 Apple Inc Earnings Call",
+        "Quarter 2 2016 Apple Inc Earnings Call",
+        "Q2 2016 Apple Inc",
+    ],
+)
+def test_extract_header_metadata_edge_cases_invalid(bad_header):
+    with pytest.raises(ValueError, match="Could not locate header metadata"):
+        tp._extract_header_metadata(bad_header)
+
+
 def test_extract_conference_participants_rejects_missing_line_column():
     with pytest.raises(KeyError):
         tp._extract_conference_participants(pd.DataFrame({"text": [" * Tim Cook"]}))
@@ -162,6 +186,24 @@ def test_parse_transcript_to_json_writes_non_empty_corporate_and_conference(tmp_
 
     assert len(data["Corporate"]) > 0
     assert len(data["Conference"]) > 0
+
+
+def test_parse_transcript_to_json_end_to_end_matches_expected_json(tmp_path):
+    transcript_path = ROOT / "data/Transcripts/INTC/2017-Jan-26-INTC.txt"
+    expected_json_path = ROOT / "tests/speech_parser/EXPECTED_OUTPUT.json"
+
+    if not expected_json_path.exists():
+        pytest.skip(f"Expected JSON fixture not found: {expected_json_path}")
+
+    output_path = tp.parse_transcript_to_json(transcript_path, output_dir=tmp_path)
+
+    with output_path.open("r", encoding="utf-8") as f:
+        actual_data = json.load(f)
+
+    with expected_json_path.open("r", encoding="utf-8") as f:
+        expected_data = json.load(f)
+
+    assert actual_data == expected_data
 
 
 def test_extract_corporate_participants_correctness_case_1_placeholder():
