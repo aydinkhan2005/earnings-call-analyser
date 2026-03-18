@@ -65,3 +65,5 @@ def test_hedging_labeller_accepts_valid_input_with_mocked_client(monkeypatch, tm
     assert list(result.columns) == ["sentence", "isHedge"]
     assert result["isHedge"].tolist() == [1, 0]
     assert output_csv.exists()
+    written = pd.read_csv(output_csv, keep_default_na=False)
+    assert written["sentence"].tolist() == ["We may see stronger demand.", ""]
