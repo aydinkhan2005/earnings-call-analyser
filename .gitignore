@@ -1,0 +1,6 @@
+.env
+pytest.ini
+__pycache__/
+.idea/
+*.pyc
+data/processed
