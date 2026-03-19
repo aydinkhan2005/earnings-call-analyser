@@ -1,0 +1,7 @@
+anthropic==0.86.0
+nltk==3.9.3
+pandas==3.0.1
+pytest==9.0.2
+pytest.egg==info
+tqdm==4.67.1
+tqdm==4.67.3
