@@ -5,7 +5,7 @@ from pathlib import Path
 from speech_parser.speaker_isolator import get_speaker
 
 
-ROOT = Path(__file__).resolve().parents[2]
+ROOT = Path(__file__).resolve().parents[3]
 
 
 @pytest.fixture
