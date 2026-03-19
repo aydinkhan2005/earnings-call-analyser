@@ -1,3 +1,4 @@
+import asyncio
 from pathlib import Path
 from types import SimpleNamespace
 
@@ -23,18 +24,17 @@ def test_hedging_dataset_creation_pipeline(monkeypatch, tmp_path):
     sentences_df = st.sentence_tokenizer(json_path)
 
     # Label sentences using a DummyClient via monkeypatch
-    class DummyClient:
-        def __init__(self):
-            self.messages = self
-
-        def create(self, **kwargs):
+    class DummyMessages:
+        async def create(self, **kwargs):
             return SimpleNamespace(content=[SimpleNamespace(text="1")])
 
-    monkeypatch.setattr(hl.anthropic, "Anthropic", lambda api_key=None: DummyClient())
+    class DummyClient:
+        def __init__(self):
+            self.messages = DummyMessages()
 
-    output_csv = Path(__file__).resolve().parent / "test_labelled_sentences.csv"
-    result = hl.hedging_labeller(sentences_df, output_csv_path=output_csv)
+    monkeypatch.setattr(hl.anthropic, "AsyncAnthropic", lambda api_key=None: DummyClient())
+
+    result = asyncio.run(hl.hedging_labeller(sentences_df, semaphore=asyncio.Semaphore(10)))
 
     assert "sentence" in result.columns
     assert "isHedge" in result.columns
-    assert output_csv.exists()

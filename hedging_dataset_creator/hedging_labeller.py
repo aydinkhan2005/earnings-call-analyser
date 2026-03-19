@@ -4,9 +4,10 @@ import os
 from pathlib import Path
 
 import anthropic
+import asyncio
 import numpy as np
 import pandas as pd
-from tqdm.auto import tqdm
+from tqdm.asyncio import tqdm
 from dotenv import load_dotenv
 
 def get_hedging_on_sentence(sentence):
@@ -39,71 +40,37 @@ def get_hedging_on_sentence(sentence):
     return prompt
 
 
-def hedging_labeller(
+async def hedging_labeller(
     sentences_df,
+    semaphore=asyncio.Semaphore(10),
     model="claude-haiku-4-5-20251001",
-    output_csv_path="labelled_sentences.csv",
-    save_every=50,
 ):
     load_dotenv()
     if not isinstance(sentences_df, pd.DataFrame):
         raise TypeError("sentences_df must be a pandas DataFrame")
     if "sentence" not in sentences_df.columns:
         raise ValueError("sentences_df must include a 'sentence' column")
-    if not isinstance(save_every, int) or save_every <= 0:
-        raise ValueError("save_every must be a positive integer")
 
-    client = anthropic.Anthropic(api_key=os.getenv("ANTHROPIC_API_KEY"))
+    client = anthropic.AsyncAnthropic(api_key=os.getenv("ANTHROPIC_API_KEY"))
 
     sentences_with_labels = sentences_df.copy()
-    labels = []
-    # current list of sentence-hedge label pairs
-    checkpoint_buffer = []
-    output_path = Path(output_csv_path)
-    is_first_write = True
     sentence_values = sentences_with_labels["sentence"].tolist()
 
-    for idx, sentence in enumerate(
-        tqdm(
-            sentence_values,
-            total=len(sentence_values),
-            desc="Labelling hedging sentences",
-            unit="sentence",
-        ),
-        start=1,
-    ):
+    async def classify(sentence):
         if not pd.isna(sentence):
-            sentence_text = str(sentence)
-            response = client.messages.create(
-                model=model,
-                max_tokens=5,
-                messages=[{"role": "user", "content": get_hedging_on_sentence(sentence_text)}],
-            )
-            label_text = response.content[0].text.strip()
+            async with semaphore:
+                sentence_text = str(sentence)
+                response = await client.messages.create(
+                    model=model,
+                    max_tokens=5,
+                    messages=[{"role": "user", "content": get_hedging_on_sentence(sentence_text)}],
+                )
+                return response.content[0].text.strip()
         else:
-            label_text = np.nan
-            sentence_text = ""
+            return np.nan
 
-        labels.append(label_text)
-
-        checkpoint_buffer.append({"sentence": sentence_text, "isHedge": label_text})
-        if idx % save_every == 0:
-            pd.DataFrame(checkpoint_buffer).to_csv(
-                output_path,
-                mode="w" if is_first_write else "a",
-                header=is_first_write,
-                index=False,
-            )
-            checkpoint_buffer.clear()
-            is_first_write = False
-
-    if checkpoint_buffer:
-        pd.DataFrame(checkpoint_buffer).to_csv(
-            output_path,
-            mode="w" if is_first_write else "a",
-            header=is_first_write,
-            index=False,
-        )
+    tasks = [classify(sentence) for sentence in sentence_values]
+    labels = await tqdm.gather(*tasks, desc="Labelling hedging sentences", unit="sentence")
 
     sentences_with_labels["isHedge"] = labels
     return sentences_with_labels
