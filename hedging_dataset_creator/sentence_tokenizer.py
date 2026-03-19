@@ -13,7 +13,7 @@ def _normalize_name(name: object) -> str:
 	return str(name or "").strip().casefold()
 
 
-def create_df_speeches(transcript_path: str | Path) -> pd.DataFrame:
+def sentence_tokenizer(transcript_path: str | Path) -> pd.DataFrame:
 	"""Create a sentence-level DataFrame using only Corporate speakers.
 
 	The function parses the transcript into JSON (via parse_transcript_to_json),
@@ -34,16 +34,24 @@ def create_df_speeches(transcript_path: str | Path) -> pd.DataFrame:
 	except json.JSONDecodeError as exc:
 		raise ValueError(f"Invalid JSON in processed file: {json_output_path}") from exc
 
-	corporate_names = {
-		_normalize_name(person.get("Name", ""))
+	corporate_tuples = [
+		(
+			_normalize_name(person.get("Name", "")),
+			_normalize_name(person.get("Company", "")),
+			_normalize_name(person.get("Role", "")),
+		)
 		for person in transcript_data.get("Corporate", [])
-		if isinstance(person, dict) and person.get("Name")
-	}
-	conference_names = {
-		_normalize_name(person.get("Name", ""))
+		if isinstance(person, dict)
+	]
+	conference_tuples = [
+		(
+			_normalize_name(person.get("Name", "")),
+			_normalize_name(person.get("Company", "")),
+			_normalize_name(person.get("Role", "")),
+		)
 		for person in transcript_data.get("Conference", [])
-		if isinstance(person, dict) and person.get("Name")
-	}
+		if isinstance(person, dict)
+	]
 
 	all_speeches: list[str] = []
 	for section_name in ("presentation", "qa"):
@@ -51,10 +59,14 @@ def create_df_speeches(transcript_path: str | Path) -> pd.DataFrame:
 			if not isinstance(speaker_entry, dict):
 				continue
 
-			speaker_name = _normalize_name(speaker_entry.get("Speaker", ""))
-			speech_text = str(speaker_entry.get("Speech", "") or "").strip()
-			if speaker_name in corporate_names and speaker_name not in conference_names and speech_text:
-				all_speeches.append(speech_text)
+			speaker_tuple = (
+				_normalize_name(speaker_entry.get("Speaker", "")),
+				_normalize_name(speaker_entry.get("Company", "")),
+				_normalize_name(speaker_entry.get("Role", "")),
+			)
+			speech_test = str(speaker_entry.get("Speech", "") or "").strip()
+			if speaker_tuple in corporate_tuples and speaker_tuple not in conference_tuples:
+				all_speeches.append(speech_test)
 
 	all_sentences: list[str] = []
 	for speech in all_speeches:
