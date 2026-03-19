@@ -19,6 +19,10 @@ jobs:
       - name: Install dependencies
         run: pip install -r requirements.txt
 
+      - name: Download NLTK punkt_tab
+        run: |
+             python -m nltk.downloader punkt_tab
+
       - name: Run tests
         run: pytest
         env:
