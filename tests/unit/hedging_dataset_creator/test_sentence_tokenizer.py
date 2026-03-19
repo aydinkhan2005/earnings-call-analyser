@@ -17,21 +17,17 @@ def test_sentence_tokenizer_rejects_invalid_transcript_path_type(bad_path):
         st.sentence_tokenizer(bad_path)
 
 
-def test_sentence_tokenizer_wraps_json_read_errors(monkeypatch):
-    monkeypatch.setattr(st, "parse_transcript_to_json", lambda _: "/definitely/missing.json")
-
-    with pytest.raises(OSError, match="Failed to read processed JSON file"):
-        st.sentence_tokenizer("dummy.txt")
+def test_sentence_tokenizer_rejects_missing_json_file():
+    with pytest.raises(FileNotFoundError, match="Processed JSON file does not exist"):
+        st.sentence_tokenizer("/definitely/missing.json")
 
 
-def test_sentence_tokenizer_rejects_invalid_json(monkeypatch, tmp_path):
+def test_sentence_tokenizer_rejects_invalid_json(tmp_path):
     invalid_json = tmp_path / "bad.json"
     invalid_json.write_text("{not valid json", encoding="utf-8")
 
-    monkeypatch.setattr(st, "parse_transcript_to_json", lambda _: invalid_json)
-
     with pytest.raises(ValueError, match="Invalid JSON in processed file"):
-        st.sentence_tokenizer("dummy.txt")
+        st.sentence_tokenizer(invalid_json)
 
 
 def test_sentence_tokenizer_accepts_valid_input(monkeypatch, tmp_path):
@@ -95,10 +91,9 @@ def test_sentence_tokenizer_accepts_valid_input(monkeypatch, tmp_path):
     processed_path = tmp_path / "processed.json"
     processed_path.write_text(json.dumps(transcript_json), encoding="utf-8")
 
-    monkeypatch.setattr(st, "parse_transcript_to_json", lambda _: processed_path)
     monkeypatch.setattr(st, "sent_tokenize", lambda text: [s.strip() for s in text.split(".") if s.strip()])
 
-    result = st.sentence_tokenizer("dummy.txt")
+    result = st.sentence_tokenizer(processed_path)
 
     assert isinstance(result, pd.DataFrame)
     assert list(result.columns) == ["sentence"]

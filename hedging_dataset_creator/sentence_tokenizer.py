@@ -6,8 +6,6 @@ from pathlib import Path
 import pandas as pd
 from nltk.tokenize import sent_tokenize
 
-from speech_parser.transcript_parser import parse_transcript_to_json
-
 
 def _normalize_name(name: object) -> str:
 	return str(name or "").strip().casefold()
@@ -16,15 +14,19 @@ def _normalize_name(name: object) -> str:
 def sentence_tokenizer(transcript_path: str | Path) -> pd.DataFrame:
 	"""Create a sentence-level DataFrame using only Corporate speakers.
 
-	The function parses the transcript into JSON (via parse_transcript_to_json),
-	loads the generated JSON, extracts speech text from `presentation` and `qa`
+	The function loads a processed JSON transcript file, extracts speech text from
+	`presentation` and `qa`
 	where the speaker belongs to `Corporate` (and not `Conference`), tokenizes
 	speech into sentences, and returns a DataFrame with one column: `sentence`.
 	"""
 	if isinstance(transcript_path, bool) or not isinstance(transcript_path, (str, Path)):
 		raise TypeError("transcript_path must be a string or pathlib.Path.")
 
-	json_output_path = parse_transcript_to_json(transcript_path)
+	json_output_path = Path(transcript_path)
+	if not json_output_path.exists():
+		raise FileNotFoundError(f"Processed JSON file does not exist: {json_output_path}")
+	if not json_output_path.is_file():
+		raise ValueError(f"transcript_path is not a file: {json_output_path}")
 
 	try:
 		with Path(json_output_path).open("r", encoding="utf-8") as file_obj:
