@@ -7,7 +7,7 @@ import anthropic
 import numpy as np
 import pandas as pd
 from tqdm.auto import tqdm
-
+from dotenv import load_dotenv
 
 def get_hedging_on_sentence(sentence):
     prompt = f"""You are a financial language expert specialising in earnings call analysis.
@@ -45,12 +45,14 @@ def hedging_labeller(
     output_csv_path="labelled_sentences.csv",
     save_every=50,
 ):
+    load_dotenv()
     if not isinstance(sentences_df, pd.DataFrame):
         raise TypeError("sentences_df must be a pandas DataFrame")
     if "sentence" not in sentences_df.columns:
         raise ValueError("sentences_df must include a 'sentence' column")
     if not isinstance(save_every, int) or save_every <= 0:
         raise ValueError("save_every must be a positive integer")
+
     client = anthropic.Anthropic(api_key=os.getenv("ANTHROPIC_API_KEY"))
 
     sentences_with_labels = sentences_df.copy()
