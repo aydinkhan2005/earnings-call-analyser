@@ -4,6 +4,7 @@ import os
 from pathlib import Path
 
 import anthropic
+import numpy as np
 import pandas as pd
 from tqdm.auto import tqdm
 
@@ -33,7 +34,7 @@ def get_hedging_on_sentence(sentence):
 
     Sentence: "{sentence}"
 
-    Reply with only 0 or 1. No explanation."""
+    You must reply with ONLY a single character: 0 or 1. Any other response is invalid."""
 
     return prompt
 
@@ -54,6 +55,7 @@ def hedging_labeller(
 
     sentences_with_labels = sentences_df.copy()
     labels = []
+    # current list of sentence-hedge label pairs
     checkpoint_buffer = []
     output_path = Path(output_csv_path)
     is_first_write = True
@@ -68,20 +70,21 @@ def hedging_labeller(
         ),
         start=1,
     ):
-        sentence_text = "" if pd.isna(sentence) else str(sentence)
-        response = client.messages.create(
-            model=model,
-            max_tokens=5,
-            messages=[{"role": "user", "content": get_hedging_on_sentence(sentence_text)}],
-        )
-        label_text = response.content[0].text.strip()
-        if label_text not in {"0", "1"}:
-            raise ValueError(f"Unexpected label returned by model: {label_text!r}")
+        if not pd.isna(sentence):
+            sentence_text = str(sentence)
+            response = client.messages.create(
+                model=model,
+                max_tokens=5,
+                messages=[{"role": "user", "content": get_hedging_on_sentence(sentence_text)}],
+            )
+            label_text = response.content[0].text.strip()
+        else:
+            label_text = np.nan
+            sentence_text = ""
 
-        label_value = int(label_text)
-        labels.append(label_value)
+        labels.append(label_text)
 
-        checkpoint_buffer.append({"sentence": sentence_text, "isHedge": label_value})
+        checkpoint_buffer.append({"sentence": sentence_text, "isHedge": label_text})
         if idx % save_every == 0:
             pd.DataFrame(checkpoint_buffer).to_csv(
                 output_path,
