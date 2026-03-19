@@ -19,8 +19,7 @@ def test_hedging_dataset_creation_pipeline(monkeypatch, tmp_path):
     )
     assert json_path.name == "2017-Apr-19-ASML.json"
 
-    # Tokenize sentences from JSON, monkeypatching the internal parser call
-    monkeypatch.setattr(st, "parse_transcript_to_json", lambda _: json_path)
+    # Tokenize sentences from JSON
     sentences_df = st.sentence_tokenizer(json_path)
 
     # Label sentences using a DummyClient via monkeypatch
