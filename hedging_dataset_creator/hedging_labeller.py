@@ -34,17 +34,18 @@ def get_hedging_on_sentence(sentences):
     - Distancing language: it appears, it seems, there is reason to believe
     - Negative hedges: cannot guarantee, no assurance, cannot predict
     
+    Important:
+    - Not every modal verb is hedging. "We will pay the dividend"
+    is NOT hedging. "We believe we will pay the dividend" IS hedging.
+    Direct factual statements about past results are NOT hedging.
+    
     Expressions of excitement, confidence, or enthusiasm are NOT hedging:
     - "We're really excited about X" is NOT hedging
     - "The future of Apple is very bright" is NOT hedging  
     - "Our product pipeline has amazing innovations in store" is NOT hedging
     Direct positive assertions, even about the future, are NOT hedging unless 
-    they contain explicit uncertainty markers.
-    
-    Important:
-    - Not every modal verb is hedging. "We will pay the dividend"
-    is NOT hedging. "We believe we will pay the dividend" IS hedging.
-    Direct factual statements about past results are NOT hedging.
+    they contain explicit uncertainty markers. Confidence about the future is NOT the same as 
+    uncertainty about the future.
 
     Sentences reporting figures or statistics using words like "estimated," "approximately," or "around" ARE hedging -- the speaker is deliberately qualifying the precision of the claim.
 
@@ -70,6 +71,24 @@ async def hedging_labeller(
         raise TypeError("sentences_df must be a pandas DataFrame")
     if "sentence" not in sentences_df.columns:
         raise ValueError("sentences_df must include a 'sentence' column")
+
+    if len(sentences_df) > 400:
+        midpoint = len(sentences_df) // 2
+        first_half = sentences_df.iloc[:midpoint].copy()
+        second_half = sentences_df.iloc[midpoint:].copy()
+
+        first_labeled = await hedging_labeller(
+            first_half,
+            semaphore=semaphore,
+            model=model,
+        )
+        second_labeled = await hedging_labeller(
+            second_half,
+            semaphore=semaphore,
+            model=model,
+        )
+
+        return pd.concat([first_labeled, second_labeled])
 
     client = anthropic.AsyncAnthropic(api_key=os.getenv("ANTHROPIC_API_KEY"))
 
