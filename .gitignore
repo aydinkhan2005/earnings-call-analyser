@@ -4,3 +4,4 @@ __pycache__/
 .idea/
 *.pyc
 data/processed
+data/hedging_dataset

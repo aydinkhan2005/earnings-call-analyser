@@ -93,51 +93,96 @@ async def hedging_labeller(
     client = anthropic.AsyncAnthropic(api_key=os.getenv("ANTHROPIC_API_KEY"))
 
     sentences_with_labels = sentences_df.copy()
+    sentences_with_labels["isHedge"] = np.nan
     sentence_values = sentences_with_labels["sentence"].tolist()
 
     # Create batches of max 10 sentences
     batch_size = 10
-    batches = [sentence_values[i:i+batch_size] for i in range(0, len(sentence_values), batch_size)]
+    batches = []
+    for start_idx in range(0, len(sentence_values), batch_size):
+        end_idx = start_idx + batch_size
+        batch_indices = sentences_with_labels.index[start_idx:end_idx].tolist()
+        batch_sentences = sentence_values[start_idx:end_idx]
+        batches.append((batch_indices, batch_sentences))
 
-    async def classify_batch(batch):
+    max_retries = 3
+    retry_delay_seconds = 1.0
+
+    async def classify_batch(batch_indices, batch_sentences):
         # Filter out NaN values but keep track of original positions
-        batch_with_positions = [(idx, sentence) for idx, sentence in enumerate(batch) if pd.notna(sentence)]
+        batch_with_positions = [
+            (idx, sentence)
+            for idx, sentence in zip(batch_indices, batch_sentences)
+            if pd.notna(sentence)
+        ]
         
         if not batch_with_positions:
-            return [np.nan] * len(batch)
-        
-        async with semaphore:
-            non_nan_batch = [str(sentence) for _, sentence in batch_with_positions]
-            response = await client.messages.create(
-                model=model,
-                max_tokens=50,
-                messages=[{"role": "user", "content": get_hedging_on_sentence(non_nan_batch)}],
-            )
-            response_text = response.content[0].text.strip()
-            
-            # Parse comma-separated response (e.g., "1,0,0,1")
-            labels_str = response_text.split(',')
-            labels = [int(label.strip()) if label.strip().isdigit() else np.nan for label in labels_str]
-            if len(labels) != len(non_nan_batch):
-                logging.warning(f"Label count mismatch: expected {len(non_nan_batch)}, got {len(labels)}. Batch: {non_nan_batch}")
-                return [np.nan] * len(batch)
+            return batch_indices, [np.nan] * len(batch_sentences)
 
-        
-        # Map labels back to original batch with NaN in correct positions
-        result = [np.nan] * len(batch)
-        for label_idx, (orig_idx, _) in enumerate(batch_with_positions):
-            if label_idx < len(labels):
-                result[orig_idx] = labels[label_idx]
-        
-        return result
+        non_nan_batch = [str(sentence) for _, sentence in batch_with_positions]
+
+        for attempt in range(max_retries + 1):
+            try:
+                async with semaphore:
+                    response = await client.messages.create(
+                        model=model,
+                        max_tokens=50,
+                        messages=[{"role": "user", "content": get_hedging_on_sentence(non_nan_batch)}],
+                    )
+                response_text = response.content[0].text.strip()
+
+                # Parse comma-separated response (e.g., "1,0,0,1")
+                labels_str = response_text.split(',')
+                labels = []
+                for label in labels_str:
+                    cleaned_label = label.strip().strip('"').strip("'")
+                    labels.append(int(cleaned_label) if cleaned_label.isdigit() else np.nan)
+
+                if len(labels) != len(non_nan_batch):
+                    raise ValueError(
+                        f"Label count mismatch: expected {len(non_nan_batch)}, got {len(labels)}"
+                    )
+
+                # Map labels back to original batch with NaN in correct positions
+                result = [np.nan] * len(batch_sentences)
+                index_lookup = {idx: pos for pos, idx in enumerate(batch_indices)}
+                for label_idx, (orig_idx, _) in enumerate(batch_with_positions):
+                    result[index_lookup[orig_idx]] = labels[label_idx]
+                return batch_indices, result
+            except Exception as exc:
+                if attempt < max_retries:
+                    delay = retry_delay_seconds * (2 ** attempt)
+                    logging.warning(
+                        "Batch labelling failed (attempt %s/%s). Retrying in %.1fs. Error: %s",
+                        attempt + 1,
+                        max_retries + 1,
+                        delay,
+                        exc,
+                    )
+                    await asyncio.sleep(delay)
+                    continue
+
+                logging.error(
+                    "Batch labelling failed after %s attempts. Returning NaNs for this batch. Error: %s",
+                    max_retries + 1,
+                    exc,
+                )
+                return batch_indices, [np.nan] * len(batch_sentences)
 
     # Process batches
-    tasks = [classify_batch(batch) for batch in batches]
-    batch_results = await tqdm.gather(*tasks, desc="Labelling hedging sentences", unit="batch")
-    
-    # Flatten results
-    labels = [label for batch in batch_results for label in batch]
+    tasks = [
+        asyncio.create_task(classify_batch(batch_indices, batch_sentences))
+        for batch_indices, batch_sentences in batches
+    ]
 
-    sentences_with_labels["isHedge"] = labels
+    progress = tqdm(total=len(tasks), desc="Labelling hedging sentences", unit="batch")
+    try:
+        for task in asyncio.as_completed(tasks):
+            batch_indices, batch_labels = await task
+            sentences_with_labels.loc[batch_indices, "isHedge"] = batch_labels
+            progress.update(1)
+    finally:
+        progress.close()
+
     return sentences_with_labels
 
