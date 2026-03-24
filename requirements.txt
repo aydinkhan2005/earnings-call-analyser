@@ -6,3 +6,4 @@ tqdm==4.67.3
 python-dotenv==1.2.2
 yfinance==1.2.0
 plotly==6.6.0
+streamlit==1.55.0
