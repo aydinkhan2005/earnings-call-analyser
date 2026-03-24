@@ -1,9 +1,9 @@
 anthropic==0.86.0
 nltk==3.9.3
-pandas==3.0.1
+pandas
 pytest==9.0.2
 tqdm==4.67.3
 python-dotenv==1.2.2
-yfinance==1.2.0
+yfinance
 plotly==6.6.0
-streamlit==1.55.0
+streamlit
