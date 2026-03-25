@@ -13,15 +13,14 @@ TRANSCRIPT_PATH = "2017-Apr-19-ASML.txt"
 
 
 def test_hedging_dataset_creation_pipeline(monkeypatch, tmp_path):
-    # Parse transcript to JSON
-    json_path = tp.parse_transcript_to_json(
+    # Parse transcript to in-memory JSON data
+    data = tp.parse_transcript_to_data(
         ROOT / "data" / "Transcripts" / "ASML" / TRANSCRIPT_PATH,
-        output_dir=tmp_path,
     )
-    assert json_path.name == "2017-Apr-19-ASML.json"
+    assert isinstance(data, dict)
 
-    # Tokenize sentences from JSON
-    sentences_df = st.sentence_tokenizer(json_path)
+    # Tokenize sentences from parsed data
+    sentences_df = st.sentence_tokenizer(data)
 
     # Label sentences using a DummyClient via monkeypatch
     class DummyMessages:

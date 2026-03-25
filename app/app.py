@@ -1,10 +1,18 @@
+import sys
+from pathlib import Path
+
+APP_DIR = Path(__file__).resolve().parent
+ROOT_DIR = APP_DIR.parent
+
+for p in (str(ROOT_DIR), str(APP_DIR)):
+    if p not in sys.path:
+        sys.path.insert(0, p)
 import streamlit as st
 import yfinance as yf
 import anthropic
 import json
 import requests
 import datetime
-from pathlib import Path
 import plotly.graph_objects as go
 import plotly.express as px
 from plotly.subplots import make_subplots
@@ -673,14 +681,17 @@ ticker      = COMPANIES[company_sel]["ticker"]
 name_short  = COMPANIES[company_sel]["name_short"]
 start, end  = quarter_to_dates(quarter_sel, year_sel)
 prev_qrs    = prev_quarters(quarter_sel, year_sel, n=5)
-# WRITE CODE HERE
+# take user input and fetch the relevant transcript
 with st.spinner(f"Fetching transcript and stock data for {company_sel} {quarter_sel} {year_sel}…"):
-    print(recieve_input(ticker, quarter_sel, year_sel).name)
-
-
+    # retrieve the relevant transcript's file path
+    transcript_path = recieve_input(ticker, quarter_sel, year_sel)
+#
 with st.spinner("Running AI analysis…"):
     try:
-        analysis = analyse_transcript(company_sel, ticker, quarter_sel, year_sel, transcript)
+        from speech_parser.transcript_parser import parse_transcript_to_data
+        transcript_data = parse_transcript_to_data(transcript_path)
+        print('Parsed transcript into memory')
+        exit()
     except Exception as e:
         st.error(f"Analysis failed: {e}")
         st.stop()

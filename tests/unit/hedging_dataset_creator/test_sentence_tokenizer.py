@@ -1,5 +1,3 @@
-import json
-
 import pandas as pd
 import pytest
 
@@ -11,26 +9,13 @@ def test_normalize_name_handles_empty_and_whitespace():
     assert st._normalize_name("  Tim Cook  ") == "tim cook"
 
 
-@pytest.mark.parametrize("bad_path", [True, None, 123, 1.25, []])
-def test_sentence_tokenizer_rejects_invalid_transcript_path_type(bad_path):
-    with pytest.raises(TypeError, match="transcript_path must be a string or pathlib.Path"):
-        st.sentence_tokenizer(bad_path)
+@pytest.mark.parametrize("bad_input", [True, None, 123, 1.25, [], "not-a-dict"])
+def test_sentence_tokenizer_rejects_invalid_data_type(bad_input):
+    with pytest.raises(TypeError, match=r"data must be a JSON object \(dict\)"):
+        st.sentence_tokenizer(bad_input)
 
 
-def test_sentence_tokenizer_rejects_missing_json_file():
-    with pytest.raises(FileNotFoundError, match="Processed JSON file does not exist"):
-        st.sentence_tokenizer("/definitely/missing.json")
-
-
-def test_sentence_tokenizer_rejects_invalid_json(tmp_path):
-    invalid_json = tmp_path / "bad.json"
-    invalid_json.write_text("{not valid json", encoding="utf-8")
-
-    with pytest.raises(ValueError, match="Invalid JSON in processed file"):
-        st.sentence_tokenizer(invalid_json)
-
-
-def test_sentence_tokenizer_accepts_valid_input(monkeypatch, tmp_path):
+def test_sentence_tokenizer_accepts_valid_input(monkeypatch):
     transcript_json = {
         "Corporate": [
             {"Name": "Alice", "Company": "Contoso Inc.", "Role": "CFO"},
@@ -88,12 +73,9 @@ def test_sentence_tokenizer_accepts_valid_input(monkeypatch, tmp_path):
             },
         ],
     }
-    processed_path = tmp_path / "processed.json"
-    processed_path.write_text(json.dumps(transcript_json), encoding="utf-8")
-
     monkeypatch.setattr(st, "sent_tokenize", lambda text: [s.strip() for s in text.split(".") if s.strip()])
 
-    result = st.sentence_tokenizer(processed_path)
+    result = st.sentence_tokenizer(transcript_json)
 
     assert isinstance(result, pd.DataFrame)
     assert list(result.columns) == ["sentence"]

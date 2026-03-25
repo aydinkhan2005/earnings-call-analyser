@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import json
 import re
 from pathlib import Path
 from typing import Any
@@ -179,15 +178,13 @@ def _presentation_cutoff(marker_numbers: list[int], total_speakers: int) -> int:
     return total_speakers
 
 
-def parse_transcript_to_json(transcript_path: str | Path, output_dir: str | Path | None = None) -> Path:
+def parse_transcript_to_data(transcript_path: str | Path) -> dict[str, Any]:
     """Parse an earnings transcript text file and write a structured JSON file.
 
     Args:
         transcript_path: Path to transcript .txt, e.g. data/Transcripts/AAPL/2016-Apr-26-AAPL.txt.
-        output_dir: Optional output directory. If omitted, writes JSON to data/processed/.
-
     Returns:
-        Path to the written JSON file.
+        Parsed transcript JSON-compatible object.
     """
     if isinstance(transcript_path, bool) or not isinstance(transcript_path, (str, Path)):
         raise TypeError("transcript_path must be a string or pathlib.Path.")
@@ -268,17 +265,6 @@ def parse_transcript_to_json(transcript_path: str | Path, output_dir: str | Path
         else:
             qa.append(entry)
 
-    output_base_dir: Path
-    if output_dir is None:
-        output_base_dir = Path("data") / "processed"
-    else:
-        if isinstance(output_dir, bool) or not isinstance(output_dir, (str, Path)):
-            raise TypeError("output_dir must be a string or pathlib.Path when provided.")
-        output_base_dir = Path(output_dir)
-
-    output_base_dir.mkdir(parents=True, exist_ok=True)
-    output_path = output_base_dir / f"{transcript_path.stem}.json"
-
     data = {
         "Company": company,
         "Year": year,
@@ -289,8 +275,5 @@ def parse_transcript_to_json(transcript_path: str | Path, output_dir: str | Path
         "qa": qa,
     }
 
-    with output_path.open("w", encoding="utf-8") as f:
-        json.dump(data, f, indent=4)
-
-    return output_path
+    return data
 

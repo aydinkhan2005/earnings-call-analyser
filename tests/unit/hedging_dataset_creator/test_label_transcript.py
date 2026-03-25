@@ -1,5 +1,6 @@
 import asyncio
 
+import pandas as pd
 import pytest
 
 from hedging_dataset_creator import label_transcript as lt
@@ -32,7 +33,7 @@ def test_label_transcript_sentences_returns_early_if_processed_csv_exists(monkey
     async def should_not_call_labeller(*args, **kwargs):
         raise AssertionError("hedging_labeller should not be called when CSV exists")
 
-    monkeypatch.setattr(lt, "parse_transcript_to_json", should_not_call_parse)
+    monkeypatch.setattr(lt, "parse_transcript_to_data", should_not_call_parse)
     monkeypatch.setattr(lt, "sentence_tokenizer", should_not_call_tokenizer)
     monkeypatch.setattr(lt, "hedging_labeller", should_not_call_labeller)
 

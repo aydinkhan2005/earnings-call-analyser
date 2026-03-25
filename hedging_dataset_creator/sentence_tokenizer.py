@@ -1,7 +1,6 @@
 from __future__ import annotations
 
-import json
-from pathlib import Path
+from typing import Any
 
 import pandas as pd
 from nltk.tokenize import sent_tokenize
@@ -11,30 +10,18 @@ def _normalize_name(name: object) -> str:
 	return str(name or "").strip().casefold()
 
 
-def sentence_tokenizer(transcript_path: str | Path) -> pd.DataFrame:
+def sentence_tokenizer(data: dict[str, Any]) -> pd.DataFrame:
 	"""Create a sentence-level DataFrame using only Corporate speakers.
 
-	The function loads a processed JSON transcript file, extracts speech text from
+	The function consumes parsed transcript JSON data, extracts speech text from
 	`presentation` and `qa`
 	where the speaker belongs to `Corporate` (and not `Conference`), tokenizes
 	speech into sentences, and returns a DataFrame with one column: `sentence`.
 	"""
-	if isinstance(transcript_path, bool) or not isinstance(transcript_path, (str, Path)):
-		raise TypeError("transcript_path must be a string or pathlib.Path.")
+	if isinstance(data, bool) or not isinstance(data, dict):
+		raise TypeError("data must be a JSON object (dict).")
 
-	json_output_path = Path(transcript_path)
-	if not json_output_path.exists():
-		raise FileNotFoundError(f"Processed JSON file does not exist: {json_output_path}")
-	if not json_output_path.is_file():
-		raise ValueError(f"transcript_path is not a file: {json_output_path}")
-
-	try:
-		with Path(json_output_path).open("r", encoding="utf-8") as file_obj:
-			transcript_data = json.load(file_obj)
-	except OSError as exc:
-		raise OSError(f"Failed to read processed JSON file: {json_output_path}") from exc
-	except json.JSONDecodeError as exc:
-		raise ValueError(f"Invalid JSON in processed file: {json_output_path}") from exc
+	transcript_data = data
 
 	corporate_tuples = [
 		(

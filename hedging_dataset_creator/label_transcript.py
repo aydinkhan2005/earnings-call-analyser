@@ -7,7 +7,7 @@ import pandas as pd
 
 from hedging_dataset_creator.hedging_labeller import hedging_labeller
 from hedging_dataset_creator.sentence_tokenizer import sentence_tokenizer
-from speech_parser.transcript_parser import parse_transcript_to_json
+from speech_parser.transcript_parser import parse_transcript_to_data
 
 
 async def label_transcript_sentences(transcript_path: str | Path):
@@ -27,10 +27,9 @@ async def label_transcript_sentences(transcript_path: str | Path):
     if csv_path.exists():
         return
 
-    parse_transcript_to_json(str(transcript_file))
+    transcript_data = parse_transcript_to_data(str(transcript_file))
 
-    processed_json_path = Path("data") / "processed" / f"{file_name}.json"
-    sentences_df = pd.DataFrame(sentence_tokenizer(processed_json_path))
+    sentences_df = pd.DataFrame(sentence_tokenizer(transcript_data))
 
     classified_sentences = await hedging_labeller(
         sentences_df,
