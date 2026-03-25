@@ -1,6 +1,8 @@
 import sys
 from pathlib import Path
 
+from utils.company_stock_plotter import plot_stock_data
+
 APP_DIR = Path(__file__).resolve().parent
 ROOT_DIR = APP_DIR.parent
 
@@ -11,11 +13,8 @@ import streamlit as st
 import yfinance as yf
 import anthropic
 import json
-import requests
 import datetime
 import plotly.graph_objects as go
-import plotly.express as px
-from plotly.subplots import make_subplots
 import pandas as pd
 
 from utils.input_reciever import recieve_input
@@ -476,12 +475,12 @@ The transcript summary should include:
 
 Keep it realistic and consistent with the company's actual business. Format it as a structured transcript excerpt, about 600-800 words."""
 
-    message = client.messages.create(
-        model="claude-sonnet-4-20250514",
-        max_tokens=1200,
-        messages=[{"role": "user", "content": prompt}]
-    )
-    return message.content[0].text
+    #message = client.messages.create(
+    #    model="claude-sonnet-4-20250514",
+    #    max_tokens=1200,
+    #    messages=[{"role": "user", "content": prompt}]
+    #)
+    #return message.content[0].text
 
 def analyse_transcript(company: str, ticker: str, quarter: str, year: int, transcript: str) -> dict:
     """Run deep analysis on the transcript using Claude."""
@@ -691,20 +690,20 @@ with st.spinner("Running AI analysis…"):
         from speech_parser.transcript_parser import parse_transcript_to_data
         transcript_data = parse_transcript_to_data(transcript_path)
         print('Parsed transcript into memory')
-        exit()
     except Exception as e:
         st.error(f"Analysis failed: {e}")
         st.stop()
 
 with st.spinner("Loading stock history…"):
-    stock_df = fetch_stock_data(ticker, start, end)
-
+    col1, col2 = st.columns(2)
+    with col2:
+        plot_stock_data(ticker, year_sel, quarter_sel)
+    exit()
     prev_stocks = []
     for pq, py in prev_qrs:
         ps, pe = quarter_to_dates(pq, py)
         pdf = fetch_stock_data(ticker, ps, pe)
         prev_stocks.append((f"{pq} {py}", pdf))
-
 # ── Company Header ────────────────────────────────────────────────────────────
 st.markdown(f"""
 <div style="padding:32px 40px 0;display:flex;align-items:flex-end;justify-content:space-between;border-bottom:2px solid #0A0A0A">
