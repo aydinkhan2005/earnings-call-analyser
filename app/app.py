@@ -4,6 +4,7 @@ from pathlib import Path
 from utils.hedging_stats_displayer.earnings_call_stats import get_stats
 from utils.company_stock_plotter import plot_stock_data
 import streamlit.components.v1 as components
+from utils.sidebar_displayer.main_sidebar_displayer import render_sidebar
 
 APP_DIR = Path(__file__).resolve().parent
 ROOT_DIR = APP_DIR.parent
@@ -683,6 +684,8 @@ name_short  = COMPANIES[company_sel]["name_short"]
 start, end  = quarter_to_dates(quarter_sel, year_sel)
 prev_qrs    = prev_quarters(quarter_sel, year_sel, n=5)
 # take user input and fetch the relevant transcript
+with st.sidebar:
+    render_sidebar()
 with st.spinner(f"Fetching transcript and stock data for {company_sel} {quarter_sel} {year_sel}…"):
     # retrieve the relevant transcript's file path
     transcript_path = recieve_input(ticker, quarter_sel, year_sel)
@@ -703,7 +706,10 @@ with st.spinner("Loading stock history…"):
     with col1:
         # Example number
         earnings_call_stats = get_stats(transcript_data)
-
+        from utils.hedging_stats_displayer.earnings_call_stats import render_metrics
+        render_metrics(earnings_call_stats)
+    col3, col4 = st.columns(2)
+    with col3:
         html = f"""
         <!DOCTYPE html>
         <html>
@@ -711,11 +717,7 @@ with st.spinner("Loading stock history…"):
         <link href="https://fonts.googleapis.com/css2?family=Bodoni+Moda:ital,opsz,wght@0,6..96,400..900;1,6..96,400..900&family=Noto+Sans:ital,wght@0,100..900;1,100..900&display=swap" rel="stylesheet">
         <style>
         .typography-box {{
-            background-color: #f9f9fb;
             padding: 20px 24px;
-            border-radius: 12px;
-            border: 1px solid #e6e6e6;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.05);
             display: inline-block;
             opacity: 0;
             transform: translateY(12px);
@@ -745,13 +747,14 @@ with st.spinner("Loading stock history…"):
         </head>
         <body>
         <div class="typography-box">
-            <h3>Hedging Score</h3>
-            <p class="large-number">{earnings_call_stats}</p>
+            <h3 style="font-size: 12px">TOP HEDGED TOPICS</h3>
+            <hr>
+            <h4 style="font-weight: bold; font-family: Noto Sans, sans-serif">By sentence count</h4>
         </div>
         </body>
         </html>
         """
-
+        # ADD HEDGING PROPORTION AND MOST COMMON TOPICS
         components.html(html, height=250)
     exit()
 # ── Company Header ────────────────────────────────────────────────────────────
