@@ -7,3 +7,4 @@ python-dotenv==1.2.2
 yfinance
 plotly==6.6.0
 streamlit
+scikit-learn

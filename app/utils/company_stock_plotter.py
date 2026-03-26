@@ -79,5 +79,34 @@ def plot_stock_data(ticker: str, year: int, quarter: str):
     animation_args = {"frame": {"duration": 10, "redraw": True},  "transition": {"duration": 0}, "fromcurrent": True}
     fig.update_layout(autosize=True)
 
-    html = pio.to_html(fig, include_plotlyjs="cdn", full_html=False, auto_play=True, animation_opts=animation_args)
-    components.html(html, height=500)
+    html = pio.to_html(
+        fig,
+        include_plotlyjs="cdn",
+        full_html=False,
+        auto_play=True,
+        animation_opts=animation_args
+    )
+
+    # Inject CSS + wrapper
+    fade_html = f"""
+    <style>
+    .fade-in {{
+        opacity: 0;
+        transform: translateY(12px);  
+        animation: fadeIn 1.2s ease-out forwards;
+    }}
+
+    @keyframes fadeIn {{
+        to {{
+            opacity: 1;
+            transform: translateY(0); 
+        }}
+    }}
+    </style>
+
+    <div class="fade-in">
+        {html}
+    </div>
+    """
+
+    components.html(fade_html, height=500)

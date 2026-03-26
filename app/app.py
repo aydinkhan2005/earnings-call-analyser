@@ -1,7 +1,9 @@
 import sys
 from pathlib import Path
 
+from utils.hedging_stats_displayer.earnings_call_stats import get_stats
 from utils.company_stock_plotter import plot_stock_data
+import streamlit.components.v1 as components
 
 APP_DIR = Path(__file__).resolve().parent
 ROOT_DIR = APP_DIR.parent
@@ -698,12 +700,60 @@ with st.spinner("Loading stock history…"):
     col1, col2 = st.columns(2)
     with col2:
         plot_stock_data(ticker, year_sel, quarter_sel)
+    with col1:
+        # Example number
+        earnings_call_stats = get_stats(transcript_data)
+
+        html = f"""
+        <!DOCTYPE html>
+        <html>
+        <head>
+        <link href="https://fonts.googleapis.com/css2?family=Bodoni+Moda:ital,opsz,wght@0,6..96,400..900;1,6..96,400..900&family=Noto+Sans:ital,wght@0,100..900;1,100..900&display=swap" rel="stylesheet">
+        <style>
+        .typography-box {{
+            background-color: #f9f9fb;
+            padding: 20px 24px;
+            border-radius: 12px;
+            border: 1px solid #e6e6e6;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+            display: inline-block;
+            opacity: 0;
+            transform: translateY(12px);
+            animation: fadeIn 0.8s ease-out forwards;
+        }}
+
+        .typography-box h3 {{
+            margin: 0 0 8px 0;
+            font-family: 'Noto Sans', serif;
+            font-weight: 600;
+        }}
+
+        .typography-box p.large-number {{
+            color: orange;
+            font-size: 72px !important;
+            font-family: 'Bodoni Moda', sans-serif;
+            margin: 0;
+        }}
+
+        @keyframes fadeIn {{
+            to {{
+                opacity: 1;
+                transform: translateY(0);
+            }}
+        }}
+        </style>
+        </head>
+        <body>
+        <div class="typography-box">
+            <h3>Hedging Score</h3>
+            <p class="large-number">{earnings_call_stats}</p>
+        </div>
+        </body>
+        </html>
+        """
+
+        components.html(html, height=250)
     exit()
-    prev_stocks = []
-    for pq, py in prev_qrs:
-        ps, pe = quarter_to_dates(pq, py)
-        pdf = fetch_stock_data(ticker, ps, pe)
-        prev_stocks.append((f"{pq} {py}", pdf))
 # ── Company Header ────────────────────────────────────────────────────────────
 st.markdown(f"""
 <div style="padding:32px 40px 0;display:flex;align-items:flex-end;justify-content:space-between;border-bottom:2px solid #0A0A0A">
