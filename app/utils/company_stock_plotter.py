@@ -5,99 +5,71 @@ import streamlit.components.v1 as components
 import plotly.graph_objects as go
 import plotly.io as pio
 import numpy as np
-
-
-def plot_stock_data(ticker: str, start_date, end_date):
+def fetch_stock_history(ticker, start_date, end_date):
     """
-    Get stock data for a provided date range.
+    Fetches historical close price data for a given ticker and date range.
 
     Args:
-        ticker: Stock ticker symbol (e.g., 'AAPL')
-        :param end_date:
-        :param start_date:
+        ticker (str): ticker symbol of company
+        start_date (datetime): start date
+        end_date (datetime): end date
+
+    Returns:
+        pd.DataFrame if successful, None if fetch fails
     """
-    stock = yf.Ticker(ticker)
-    # Historical OHLCV price data for the quarter (unchanged source data)
-    hist = stock.history(start=start_date, end=end_date)
+    try:
+        stock_data = yf.Ticker(ticker)
+        hist = stock_data.history(start=start_date, end=end_date)
+    except Exception as e:
+        st.error(f"Failed to fetch data for {ticker}: {e}")
+        return None
 
     if hist.empty:
         st.warning(f"No stock data available for {ticker} between {start_date} and {end_date}.")
-        return
+        return None
 
-    x_vals = hist.index
-    y_vals = hist["Close"]
+    return hist
 
-    # Build an initial y-range with light padding to avoid a flat-looking start.
-    y0 = float(y_vals.iloc[0])
-    y_padding = max(abs(y0) * 0.01, 0.5)
 
-    fig = go.Figure(
+def build_stock_figure(hist, ticker):
+    """
+    Builds a Plotly line figure of closing prices.
+
+    Args:
+        hist (pd.DataFrame): historical OHLCV data
+        ticker (str): ticker symbol, used for the plot title
+
+    Returns:
+        go.Figure
+    """
+    return go.Figure(
         data=[
-            go.Scatter(x=[x_vals[0]], y=[y_vals.iloc[0]], mode="lines", name="Close", line=dict(width=2)),
+            go.Scatter(x=hist.index, y=hist["Close"], mode="lines", name="Close", line=dict(width=2)),
         ],
         layout=go.Layout(
             title=f"{ticker} Close Price",
-            xaxis=dict(title="Date", range=[x_vals[0], x_vals[0]], autorange=False),
-            yaxis=dict(title="Close", range=[y0 - y_padding, y0 + y_padding], autorange=False),
+            xaxis=dict(title="Date"),
+            yaxis=dict(title="Close Price (USD)"),
         )
     )
 
-    # Interpolate before the frames loop
-    num_interp = 5
-    x_numeric = np.linspace(0, len(hist) - 1, len(hist))
-    x_smooth = np.linspace(0, len(hist) - 1, len(hist) * num_interp)
-    y_smooth = np.interp(x_smooth, x_numeric, y_vals.values)
-    x_smooth_dates = pd.date_range(hist.index[0], hist.index[-1], periods=len(y_smooth))
-    y_min_full = float(y_smooth.min())
-    y_max_full = float(y_smooth.max())
-    pad = max((y_max_full - y_min_full) * 0.05, 0.5)
-    # Then just replace len(hist) with len(y_smooth), and x_vals/y_vals with the smooth versions
-    frames = []
-    for i in range(1, len(y_smooth) + 1):
-        current_y = y_smooth[:i]
-        frames.append(go.Frame(
-            data=[go.Scatter(x=x_smooth_dates[:i], y=current_y, mode="lines", line=dict(width=2))],
-            layout=go.Layout(
-                xaxis=dict(range=[x_smooth_dates[0], x_smooth_dates[-1]], autorange=False),
-                yaxis=dict(range=[y_min_full - pad, y_max_full + pad], autorange=False)
-            ),
-            name=str(i)
-        ))
+def plot_stock_data(ticker, start_date, end_date):
+    """
+    Plots a line graph of a company's stock value from start_date to end_date.
 
-    fig.frames = frames
+    Args:
+        ticker (str): ticker symbol of company
+        start_date (datetime): start date given by user
+        end_date (datetime): end date given by user
 
-    # Autoplay the animation in Streamlit without a manual Play button.
-    animation_args = {"frame": {"duration": 10, "redraw": True},  "transition": {"duration": 0}, "fromcurrent": True}
+    Returns:
+        None
+    """
+    hist = fetch_stock_history(ticker, start_date, end_date)
+    if hist is None:
+        return
+
+    fig = build_stock_figure(hist, ticker)
     fig.update_layout(autosize=True)
 
-    html = pio.to_html(
-        fig,
-        include_plotlyjs="cdn",
-        full_html=False,
-        auto_play=True,
-        animation_opts=animation_args
-    )
-
-    # Inject CSS + wrapper
-    fade_html = f"""
-    <style>
-    .fade-in {{
-        opacity: 0;
-        transform: translateY(12px);  
-        animation: fadeIn 1.2s ease-out forwards;
-    }}
-
-    @keyframes fadeIn {{
-        to {{
-            opacity: 1;
-            transform: translateY(0); 
-        }}
-    }}
-    </style>
-
-    <div class="fade-in">
-        {html}
-    </div>
-    """
-
-    components.html(fade_html, height=500)
+    st.plotly_chart(fig, use_container_width=True)

@@ -1,50 +1,65 @@
+import pandas as pd
+import plotly.express as px
 import streamlit as st
+import os
 from datetime import datetime
-from pathlib import Path
-
 from utils.company_stock_plotter import plot_stock_data
 from utils.sidebar_displayer.main_sidebar_displayer import render_sidebar
+PLACEHOLDER = "-- select an option --"
+# --- Trigger call() only when all three are selected ---
+def call(ticker, year, quarter):
+    # Your function logic here
+    st.write(f"Called with: {ticker}, {year}, {quarter}")
+def take_input():
+    path = "data/Transcripts/"
+    TICKERS = [f for f in os.listdir(path) if os.path.isdir(os.path.join(path, f)) and 'AAPL' not in f]
+    ticker = st.selectbox(
+        "Ticker",
+        options=["-- select an option --"] + TICKERS,
+        index=0
+    )
+    year = st.selectbox(
+        "Year",
+        options=["-- select an option --", 2016, 2017, 2018, 2019, 2020],
+        index=0
+    )
+    quarter_labels = {1: "Q1", 2: "Q2", 3: "Q3", 4: "Q4"}
 
-render_sidebar()
-ticker = st.session_state.ticker
-quarter = st.session_state.quarter
-year = st.session_state.year
-if ticker is not None and quarter is not None and year is not None:
-    transcript_dir = Path(__file__).resolve().parents[1] / "data" / "Transcripts" / ticker
+    quarter = st.slider('Quarter', 1, 4)
+    return ticker, quarter, year
 
-    if not transcript_dir.exists():
-        st.error(f"Transcript directory not found: {transcript_dir}")
-    else:
-        parsed_transcripts = []
-        for transcript_path in transcript_dir.glob("*.txt"):
-            parts = transcript_path.stem.split("-")
-            if len(parts) < 4:
-                continue
-            try:
-                transcript_date = datetime.strptime("-".join(parts[:3]), "%Y-%b-%d")
-            except ValueError:
-                continue
-            parsed_transcripts.append((transcript_date, transcript_path))
+st.title('Earnings Call Analyser')
+# render sidebar and take user input
+with st.sidebar:
+    render_sidebar()
+    ticker, quarter, year = take_input()
 
-        parsed_transcripts.sort(key=lambda item: item[0])
-        transcripts_in_year = [item for item in parsed_transcripts if item[0].year == int(year)]
-        n = int(quarter[1])
+# if user is prompting to see info about a particular company, show it
+if ticker != PLACEHOLDER and year != PLACEHOLDER and quarter != PLACEHOLDER:
+    row1_col1, row1_col2 = st.columns(2)
+    row2_col1, row2_col2 = st.columns(2)
+    with row1_col1:
+        plot_stock_data(ticker, datetime(2016, 1, 1), datetime(2016, 12, 31))
+    with row2_col2:
+        # Sample data
+        df = pd.DataFrame({
+            "Category": ["A", "B", "C"],
+            "Values": [10, 20, 15]
+        })
 
-        if not transcripts_in_year:
-            st.error(f"No transcripts found for {ticker} in {year}.")
-        elif n > len(transcripts_in_year):
-            st.error(
-                f"{quarter} is unavailable for {ticker} in {year}: only {len(transcripts_in_year)} transcript(s) found."
-            )
-        else:
-            # N-th transcript in selected year (1-indexed)
-            target_idx = n - 1
-            target_transcript = transcripts_in_year[target_idx]
+        # Create bar chart
+        fig = px.bar(df, y="Category", x="Values", title='Top 5 Topics')
 
-            # Build window from full chronological list so Q1-Q3 can pull prior-year context.
-            absolute_target_idx = parsed_transcripts.index(target_transcript)
-            selected_window = parsed_transcripts[max(0, absolute_target_idx - 3): absolute_target_idx + 1]
-            start_date = selected_window[0][0].strftime("%Y-%m-%d")
-            end_date = selected_window[-1][0].strftime("%Y-%m-%d")
-
-            plot_stock_data(ticker=ticker, start_date=start_date, end_date=end_date)
+        # Render in Streamlit
+        st.plotly_chart(fig)
+    with row1_col2:
+        st.subheader('Hedging Rate Breakdown')
+        c1, c2 = st.columns(2)
+        with c1:
+            st.metric('Q&A', '86%')
+        with c2:
+            st.metric('Opening', '60%')
+        st.metric('Most Common Topic', 'Hardware')
+        message = st.text_area("Ask AI Follow-Up Questions", height=100)
+    with row2_col1:
+        st.subheader('Per-Quarter Breakdown')
