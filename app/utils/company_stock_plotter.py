@@ -6,31 +6,22 @@ import plotly.graph_objects as go
 import plotly.io as pio
 import numpy as np
 
-def plot_stock_data(ticker: str, year: int, quarter: str):
+
+def plot_stock_data(ticker: str, start_date, end_date):
     """
-    Get stock data for a specific quarter and year.
+    Get stock data for a provided date range.
 
     Args:
         ticker: Stock ticker symbol (e.g., 'AAPL')
-        year: Year (e.g., 2023)
-        quarter: Quarter (1-4)
+        :param end_date:
+        :param start_date:
     """
-    # Define quarter date ranges
-    quarter_dates = {
-        'Q1': (f"{year}-01-01", f"{year}-03-31"),
-        'Q2': (f"{year}-04-01", f"{year}-06-30"),
-        'Q3': (f"{year}-07-01", f"{year}-09-30"),
-        'Q4': (f"{year}-10-01", f"{year}-12-31"),
-    }
-
-    start_date, end_date = quarter_dates[quarter]
-
     stock = yf.Ticker(ticker)
     # Historical OHLCV price data for the quarter (unchanged source data)
     hist = stock.history(start=start_date, end=end_date)
 
     if hist.empty:
-        st.warning(f"No stock data available for {ticker} in {quarter} {year}.")
+        st.warning(f"No stock data available for {ticker} between {start_date} and {end_date}.")
         return
 
     x_vals = hist.index
