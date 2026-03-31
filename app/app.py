@@ -2,8 +2,7 @@ import pandas as pd
 import plotly.express as px
 import streamlit as st
 import os
-from datetime import datetime
-from utils.company_stock_plotter import plot_stock_data
+from components.stock_chart import render_stock_chart
 from utils.sidebar_displayer.main_sidebar_displayer import render_sidebar
 PLACEHOLDER = "-- select an option --"
 # --- Trigger call() only when all three are selected ---
@@ -39,7 +38,7 @@ if ticker != PLACEHOLDER and year != PLACEHOLDER and quarter != PLACEHOLDER:
     row1_col1, row1_col2 = st.columns(2)
     row2_col1, row2_col2 = st.columns(2)
     with row1_col1:
-        plot_stock_data(ticker, datetime(2016, 1, 1), datetime(2016, 12, 31))
+        render_stock_chart(ticker, quarter, year)
     with row2_col2:
         # Sample data
         df = pd.DataFrame({
