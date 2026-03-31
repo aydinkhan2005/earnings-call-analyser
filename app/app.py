@@ -2,8 +2,11 @@ import pandas as pd
 import plotly.express as px
 import streamlit as st
 import os
+
+from utils.fetch_transcript import fetch_transcript
+from components.hedging_breakdown import render_hedging_breakdown
 from components.stock_chart import render_stock_chart
-from utils.sidebar_displayer.main_sidebar_displayer import render_sidebar
+from components.sidebar import render_sidebar
 PLACEHOLDER = "-- select an option --"
 # --- Trigger call() only when all three are selected ---
 def call(ticker, year, quarter):
@@ -35,6 +38,7 @@ with st.sidebar:
 
 # if user is prompting to see info about a particular company, show it
 if ticker != PLACEHOLDER and year != PLACEHOLDER and quarter != PLACEHOLDER:
+    transcript = fetch_transcript(ticker, quarter, year)
     row1_col1, row1_col2 = st.columns(2)
     row2_col1, row2_col2 = st.columns(2)
     with row1_col1:
@@ -52,13 +56,6 @@ if ticker != PLACEHOLDER and year != PLACEHOLDER and quarter != PLACEHOLDER:
         # Render in Streamlit
         st.plotly_chart(fig)
     with row1_col2:
-        st.subheader('Hedging Rate Breakdown')
-        c1, c2 = st.columns(2)
-        with c1:
-            st.metric('Q&A', '86%')
-        with c2:
-            st.metric('Opening', '60%')
-        st.metric('Most Common Topic', 'Hardware')
-        message = st.text_area("Ask AI Follow-Up Questions", height=100)
+        render_hedging_breakdown(transcript)
     with row2_col1:
         st.subheader('Per-Quarter Breakdown')
