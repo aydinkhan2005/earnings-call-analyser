@@ -10,6 +10,31 @@ from hedging_dataset_creator.sentence_tokenizer import sentence_tokenizer
 PIPELINE_PATH = Path(__file__).resolve().parents[2] / "models" / "tfidf_lr.pkl"
 
 
+def _render_colored_metric(col, label: str, rate_value: float | str):
+    """Render a metric with color-coded percentage based on hedge rate."""
+    if isinstance(rate_value, str) and rate_value == "N/A":
+        col.metric(label, rate_value)
+        return
+
+    rate_num = float(rate_value.rstrip("%"))
+    if rate_num > 50:
+        color = "red"
+    elif rate_num > 25:
+        color = "orange"
+    else:
+        color = "white"
+
+    col.markdown(
+        f"""
+        <div>
+            <div style='font-size: 14px; color: white;'>{label}</div>
+            <div style='font-size: 32px; color: {color}; font-weight: bold;'>{rate_value}</div>
+        </div>
+        """,
+        unsafe_allow_html=True
+    )
+
+
 def render_hedging_breakdown(transcript):
     """
     Gives a hedging rate breakdown on a transcript using a Logistic Regression
@@ -55,16 +80,15 @@ def render_hedging_breakdown(transcript):
 
     if len(presentation_rows) > 0:
         hedge_rate = 100 * float((presentation_rows == 1).mean())
-        col11.metric("Presentation", f"{hedge_rate:.1f}%")
+        _render_colored_metric(col11, "Presentation", f"{hedge_rate:.1f}%")
     else:
-        col11.metric("Presentation", "N/A")
+        _render_colored_metric(col11, "Presentation", "N/A")
 
     if len(qa_rows) > 0:
         qa_hedge_rate = 100 * float((qa_rows == 1).mean())
-        col12.metric("Q&A", f"{qa_hedge_rate:.1f}%")
+        _render_colored_metric(col12, "Q&A", f"{qa_hedge_rate:.1f}%")
     else:
-        col12.metric("Q&A", "N/A")
-
+        _render_colored_metric(col12, "Q&A", "N/A")
 
     st.subheader("Hedging Rate By Role")
     valid_role_rows = sentences_with_preds[sentences_with_preds["Role"].astype(str).str.strip() != ""]
@@ -83,13 +107,12 @@ def render_hedging_breakdown(transcript):
             col21, col22 = st.columns(2)
 
             role_1, role_1_rate = role_items[i]
-            col21.metric(role_1, f"{role_1_rate:.1f}%")
+            _render_colored_metric(col21, role_1, f"{role_1_rate:.1f}%")
 
             if i + 1 < len(role_items):
                 role_2, role_2_rate = role_items[i + 1]
-                col22.metric(role_2, f"{role_2_rate:.1f}%")
+                _render_colored_metric(col22, role_2, f"{role_2_rate:.1f}%")
             else:
                 col22.metric("", "")
 
-    st.text_area("Ask AI Follow-Up Questions", height=100)
     return sentences_with_preds
