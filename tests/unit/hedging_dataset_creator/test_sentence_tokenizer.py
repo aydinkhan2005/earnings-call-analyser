@@ -1,7 +1,7 @@
 import pandas as pd
 import pytest
 
-from hedging_dataset_creator import sentence_tokenizer as st
+from labellers import sentence_tokenizer as st
 
 
 def test_normalize_name_handles_empty_and_whitespace():

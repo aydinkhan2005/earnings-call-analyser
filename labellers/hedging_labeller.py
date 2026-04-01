@@ -59,8 +59,10 @@ def get_hedging_on_sentence(sentences):
     return prompt
 
 
-async def hedging_labeller(
+async def sentence_labeller(
     sentences_df,
+    get_prompt,
+    labelName,
     semaphore=None,
     model="claude-haiku-4-5-20251001",
 ):
@@ -77,15 +79,19 @@ async def hedging_labeller(
         first_half = sentences_df.iloc[:midpoint].copy()
         second_half = sentences_df.iloc[midpoint:].copy()
 
-        first_labeled = await hedging_labeller(
+        first_labeled = await sentence_labeller(
             first_half,
+            get_prompt,
             semaphore=semaphore,
             model=model,
+            labelName=labelName,
         )
-        second_labeled = await hedging_labeller(
+        second_labeled = await sentence_labeller(
             second_half,
+            get_prompt,
             semaphore=semaphore,
             model=model,
+            labelName=labelName,
         )
 
         return pd.concat([first_labeled, second_labeled])
@@ -93,7 +99,7 @@ async def hedging_labeller(
     client = anthropic.AsyncAnthropic(api_key=os.getenv("ANTHROPIC_API_KEY"))
 
     sentences_with_labels = sentences_df.copy()
-    sentences_with_labels["isHedge"] = np.nan
+    sentences_with_labels[labelName] = np.nan
     sentence_values = sentences_with_labels["sentence"].tolist()
 
     # Create batches of max 10 sentences
@@ -127,7 +133,7 @@ async def hedging_labeller(
                     response = await client.messages.create(
                         model=model,
                         max_tokens=50,
-                        messages=[{"role": "user", "content": get_hedging_on_sentence(non_nan_batch)}],
+                        messages=[{"role": "user", "content": get_prompt(non_nan_batch)}],
                     )
                 response_text = response.content[0].text.strip()
 
@@ -175,11 +181,11 @@ async def hedging_labeller(
         for batch_indices, batch_sentences in batches
     ]
 
-    progress = tqdm(total=len(tasks), desc="Labelling hedging sentences", unit="batch")
+    progress = tqdm(total=len(tasks), desc="Labelling sentences", unit="batch")
     try:
         for task in asyncio.as_completed(tasks):
             batch_indices, batch_labels = await task
-            sentences_with_labels.loc[batch_indices, "isHedge"] = batch_labels
+            sentences_with_labels.loc[batch_indices, labelName] = batch_labels
             progress.update(1)
     finally:
         progress.close()

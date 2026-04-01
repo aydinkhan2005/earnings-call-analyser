@@ -3,8 +3,8 @@ from pathlib import Path
 from types import SimpleNamespace
 
 from speech_parser import transcript_parser as tp
-from hedging_dataset_creator import sentence_tokenizer as st
-from hedging_dataset_creator import hedging_labeller as hl
+from labellers import sentence_tokenizer as st
+from labellers import hedging_labeller as hl
 
 
 ROOT = Path(__file__).resolve().parents[3]
@@ -33,7 +33,7 @@ def test_hedging_dataset_creation_pipeline(monkeypatch, tmp_path):
 
     monkeypatch.setattr(hl.anthropic, "AsyncAnthropic", lambda api_key=None: DummyClient())
 
-    result = asyncio.run(hl.hedging_labeller(sentences_df, semaphore=asyncio.Semaphore(10)))
+    result = asyncio.run(hl.sentence_labeller(sentences_df, hl.get_hedging_on_sentence, "isHedge", semaphore=asyncio.Semaphore(10)))
 
     assert "sentence" in result.columns
     assert "isHedge" in result.columns

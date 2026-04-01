@@ -3,14 +3,14 @@ import asyncio
 import pandas as pd
 import pytest
 
-from hedging_dataset_creator import label_transcript as lt
+from labellers import label_transcript as lt
 
 
 def test_label_transcript_sentences_rejects_missing_transcript_path(tmp_path):
     missing_path = tmp_path / "does-not-exist.txt"
 
     with pytest.raises(FileNotFoundError, match="Transcript file does not exist"):
-        asyncio.run(lt.label_transcript_sentences(missing_path))
+        asyncio.run(lt.label_transcript_with_hedging(missing_path))
 
 
 def test_label_transcript_sentences_returns_early_if_processed_csv_exists(monkeypatch, tmp_path):
@@ -31,13 +31,13 @@ def test_label_transcript_sentences_returns_early_if_processed_csv_exists(monkey
         raise AssertionError("sentence_tokenizer should not be called when CSV exists")
 
     async def should_not_call_labeller(*args, **kwargs):
-        raise AssertionError("hedging_labeller should not be called when CSV exists")
+        raise AssertionError("sentence_labeller should not be called when CSV exists")
 
     monkeypatch.setattr(lt, "parse_transcript_to_data", should_not_call_parse)
     monkeypatch.setattr(lt, "sentence_tokenizer", should_not_call_tokenizer)
-    monkeypatch.setattr(lt, "hedging_labeller", should_not_call_labeller)
+    monkeypatch.setattr(lt, "sentence_labeller", should_not_call_labeller)
 
-    result = asyncio.run(lt.label_transcript_sentences(transcript_path))
+    result = asyncio.run(lt.label_transcript_with_hedging(transcript_path))
 
     assert result is None
 
