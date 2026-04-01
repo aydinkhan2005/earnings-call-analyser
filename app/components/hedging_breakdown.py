@@ -1,6 +1,6 @@
+import joblib
 import streamlit as st
 from pathlib import Path
-import pickle
 
 import pandas as pd
 
@@ -33,10 +33,9 @@ def render_hedging_breakdown(transcript):
     if not PIPELINE_PATH.exists():
         st.error(f"Model pipeline file not found: {PIPELINE_PATH}")
         return pd.DataFrame(columns=["sentence", "isHedge"])
-    data = PIPELINE_PATH.read_bytes()
     try:
         with PIPELINE_PATH.open("rb") as f:
-            pipeline = pickle.load(f)
+            pipeline = joblib.load(f)
         predictions = pipeline.predict(sentences["sentence"])
     except Exception as exc:
         st.error(f"Failed to run hedging classifier: {exc}")
@@ -45,12 +44,52 @@ def render_hedging_breakdown(transcript):
     sentences_with_preds = sentences.copy()
     sentences_with_preds["isHedge"] = predictions
 
+    presentation_mask = sentences_with_preds["section"] == 1
+    presentation_rows = sentences_with_preds.loc[presentation_mask, "isHedge"]
+
+    qa_mask = sentences_with_preds["section"] == 0
+    qa_rows = sentences_with_preds.loc[qa_mask, "isHedge"]
+
     st.subheader("Hedging Rate Breakdown")
-    if len(sentences_with_preds) > 0:
-        hedge_rate = 100 * float((sentences_with_preds["isHedge"] == 1).mean())
-        st.metric("Overall", f"{hedge_rate:.1f}%")
+    col11, col12 = st.columns(2)
+
+    if len(presentation_rows) > 0:
+        hedge_rate = 100 * float((presentation_rows == 1).mean())
+        col11.metric("Presentation", f"{hedge_rate:.1f}%")
     else:
-        st.metric("Overall", "N/A")
+        col11.metric("Presentation", "N/A")
+
+    if len(qa_rows) > 0:
+        qa_hedge_rate = 100 * float((qa_rows == 1).mean())
+        col12.metric("Q&A", f"{qa_hedge_rate:.1f}%")
+    else:
+        col12.metric("Q&A", "N/A")
+
+
+    st.subheader("Hedging Rate By Role")
+    valid_role_rows = sentences_with_preds[sentences_with_preds["Role"].astype(str).str.strip() != ""]
+    if len(valid_role_rows) == 0:
+        st.info("No role data available for hedging-rate breakdown.")
+    else:
+        role_rates = (
+            valid_role_rows.assign(Role=valid_role_rows["Role"].astype(str).str.strip())
+            .groupby("Role")["isHedge"]
+            .apply(lambda s: 100 * float((s == 1).mean()))
+            .sort_values(ascending=False)
+        )
+        role_items = list(role_rates.items())
+
+        for i in range(0, len(role_items), 2):
+            col21, col22 = st.columns(2)
+
+            role_1, role_1_rate = role_items[i]
+            col21.metric(role_1, f"{role_1_rate:.1f}%")
+
+            if i + 1 < len(role_items):
+                role_2, role_2_rate = role_items[i + 1]
+                col22.metric(role_2, f"{role_2_rate:.1f}%")
+            else:
+                col22.metric("", "")
 
     st.text_area("Ask AI Follow-Up Questions", height=100)
     return sentences_with_preds

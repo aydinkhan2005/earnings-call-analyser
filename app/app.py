@@ -29,7 +29,7 @@ def take_input():
 
     quarter = st.slider('Quarter', 1, 4)
     return ticker, quarter, year
-
+st.set_page_config(layout='wide')
 st.title('Earnings Call Analyser')
 # render sidebar and take user input
 with st.sidebar:

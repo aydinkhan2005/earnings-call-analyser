@@ -14,9 +14,9 @@ def sentence_tokenizer(data: dict[str, Any]) -> pd.DataFrame:
 	"""Create a sentence-level DataFrame using only Corporate speakers.
 
 	The function consumes parsed transcript JSON data, extracts speech text from
-	`presentation` and `qa`
-	where the speaker belongs to `Corporate` (and not `Conference`), tokenizes
-	speech into sentences, and returns a DataFrame with one column: `sentence`.
+	`presentation` and `qa` where the speaker belongs to `Corporate` (and not
+	`Conference`), tokenizes speech into sentences, and returns columns
+	`sentence`, `section`, and `Role`.
 	"""
 	if isinstance(data, bool) or not isinstance(data, dict):
 		raise TypeError("data must be a JSON object (dict).")
@@ -42,8 +42,9 @@ def sentence_tokenizer(data: dict[str, Any]) -> pd.DataFrame:
 		if isinstance(person, dict)
 	]
 
-	all_speeches: list[str] = []
+	all_rows: list[dict[str, Any]] = []
 	for section_name in ("presentation", "qa"):
+		section_value = 1 if section_name == "presentation" else 0
 		for speaker_entry in transcript_data.get(section_name, []):
 			if not isinstance(speaker_entry, dict):
 				continue
@@ -53,13 +54,12 @@ def sentence_tokenizer(data: dict[str, Any]) -> pd.DataFrame:
 				_normalize_name(speaker_entry.get("Company", "")),
 				_normalize_name(speaker_entry.get("Role", "")),
 			)
-			speech_test = str(speaker_entry.get("Speech", "") or "").strip()
+			speaker_role = str(speaker_entry.get("Role", "") or "").strip()
+			speech_text = str(speaker_entry.get("Speech", "") or "").strip()
 			if speaker_tuple in corporate_tuples and speaker_tuple not in conference_tuples:
-				all_speeches.append(speech_test)
+				for sentence in sent_tokenize(speech_text):
+					all_rows.append(
+						{"sentence": sentence, "section": section_value, "Role": speaker_role}
+					)
 
-	all_sentences: list[str] = []
-	for speech in all_speeches:
-		all_sentences.extend(sent_tokenize(speech))
-
-	return pd.DataFrame({"sentence": all_sentences})
-
+	return pd.DataFrame(all_rows, columns=["sentence", "section", "Role"])

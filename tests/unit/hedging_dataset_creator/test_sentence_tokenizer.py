@@ -78,7 +78,7 @@ def test_sentence_tokenizer_accepts_valid_input(monkeypatch):
     result = st.sentence_tokenizer(transcript_json)
 
     assert isinstance(result, pd.DataFrame)
-    assert list(result.columns) == ["sentence"]
+    assert list(result.columns) == ["sentence", "section", "Role"]
     assert result["sentence"].tolist() == [
         "We might beat guidance",
         "Revenue is stable",
@@ -86,3 +86,5 @@ def test_sentence_tokenizer_accepts_valid_input(monkeypatch):
         "This is a 2% increase over the previous quarter",
         "Revenue was at an all time high"
     ]
+    assert result["section"].tolist() == [1, 1, 0, 0, 0]
+    assert result["Role"].tolist() == ["CFO", "CFO", "CEO", "CEO", "CFO"]
