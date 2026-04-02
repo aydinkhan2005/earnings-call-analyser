@@ -18,6 +18,33 @@ def test_hedging_labeller_requires_sentence_column():
     with pytest.raises(ValueError, match="sentences_df must include a 'sentence' column"):
         asyncio.run(hl.sentence_labeller(pd.DataFrame({"text": ["hello"]}), hl.get_hedging_on_sentence, "isHedge"))
 
+
+def test_hedging_labeller_raises_value_error_on_label_count_mismatch(monkeypatch):
+    class DummyMessages:
+        async def create(self, **kwargs):
+            # Intentionally return one label for two sentences to trigger mismatch.
+            return SimpleNamespace(content=[SimpleNamespace(text="1")])
+
+    class DummyClient:
+        def __init__(self):
+            self.messages = DummyMessages()
+
+    monkeypatch.setattr(hl.anthropic, "AsyncAnthropic", lambda api_key=None: DummyClient())
+
+    sentences_df = pd.DataFrame(
+        {"sentence": ["We may see stronger demand.", "Margins could improve next quarter."]}
+    )
+
+    with pytest.raises(ValueError, match="Label count mismatch"):
+        asyncio.run(
+            hl.sentence_labeller(
+                sentences_df,
+                hl.get_hedging_on_sentence,
+                "isHedge",
+                semaphore=asyncio.Semaphore(10),
+            )
+        )
+
 # function should output a DataFrame with columns ["sentence", "isHedge"] and output CSV file should exist
 def test_hedging_labeller_accepts_valid_input_with_mocked_client(monkeypatch, tmp_path):
     class DummyMessages:
