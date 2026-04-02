@@ -66,6 +66,11 @@ async def sentence_labeller(
     semaphore=None,
     model="claude-haiku-4-5-20251001",
 ):
+    print('Labelling sentences...')
+    COOLDOWN_SECONDS = 30
+    BATCH_SIZE = 10
+    MAX_RETRIES = 1
+    RETRY_DELAY_SECONDS = 20
     load_dotenv()
     if semaphore is None:
         semaphore = asyncio.Semaphore(10)
@@ -86,6 +91,8 @@ async def sentence_labeller(
             model=model,
             labelName=labelName,
         )
+        if len(sentences_df) >= 700:
+            await asyncio.sleep(COOLDOWN_SECONDS)
         second_labeled = await sentence_labeller(
             second_half,
             get_prompt,
@@ -103,16 +110,12 @@ async def sentence_labeller(
     sentence_values = sentences_with_labels["sentence"].tolist()
 
     # Create batches of max 10 sentences
-    batch_size = 10
     batches = []
-    for start_idx in range(0, len(sentence_values), batch_size):
-        end_idx = start_idx + batch_size
+    for start_idx in range(0, len(sentence_values), BATCH_SIZE):
+        end_idx = start_idx + BATCH_SIZE
         batch_indices = sentences_with_labels.index[start_idx:end_idx].tolist()
         batch_sentences = sentence_values[start_idx:end_idx]
         batches.append((batch_indices, batch_sentences))
-
-    max_retries = 3
-    retry_delay_seconds = 1.0
 
     async def classify_batch(batch_indices, batch_sentences):
         # Filter out NaN values but keep track of original positions
@@ -127,7 +130,9 @@ async def sentence_labeller(
 
         non_nan_batch = [str(sentence) for _, sentence in batch_with_positions]
 
-        for attempt in range(max_retries + 1):
+        response_text = None
+
+        for attempt in range(MAX_RETRIES + 1):
             try:
                 async with semaphore:
                     response = await client.messages.create(
@@ -136,7 +141,6 @@ async def sentence_labeller(
                         messages=[{"role": "user", "content": get_prompt(non_nan_batch)}],
                     )
                 response_text = response.content[0].text.strip()
-
                 # Parse comma-separated response (e.g., "1,0,0,1")
                 labels_str = response_text.split(',')
                 labels = []
@@ -156,24 +160,25 @@ async def sentence_labeller(
                     result[index_lookup[orig_idx]] = labels[label_idx]
                 return batch_indices, result
             except Exception as exc:
-                if attempt < max_retries:
-                    delay = retry_delay_seconds * (2 ** attempt)
+                if attempt < MAX_RETRIES:
+                    tqdm.write(f"Raw response: {response_text}")
                     logging.warning(
                         "Batch labelling failed (attempt %s/%s). Retrying in %.1fs. Error: %s",
                         attempt + 1,
-                        max_retries + 1,
-                        delay,
+                        MAX_RETRIES + 1,
+                        RETRY_DELAY_SECONDS,
                         exc,
                     )
-                    await asyncio.sleep(delay)
+                    await asyncio.sleep(RETRY_DELAY_SECONDS)
                     continue
 
+                # Don't return NaNs—raise the exception instead
+                tqdm.write(f"Raw response: {response_text}")
                 logging.error(
-                    "Batch labelling failed after %s attempts. Returning NaNs for this batch. Error: %s",
-                    max_retries + 1,
-                    exc,
+                    "Batch labelling failed after %s attempts. Raising exception.",
+                    MAX_RETRIES + 1,
                 )
-                return batch_indices, [np.nan] * len(batch_sentences)
+                raise  # ← Just re-raise instead of returning NaNs
 
     # Process batches
     tasks = [

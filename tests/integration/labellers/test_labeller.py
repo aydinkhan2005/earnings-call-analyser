@@ -4,7 +4,8 @@ from types import SimpleNamespace
 
 from speech_parser import transcript_parser as tp
 from labellers import sentence_tokenizer as st
-from labellers import hedging_labeller as hl
+from labellers import sentence_classifier as hl
+from labellers import topic_classifier as tc
 
 
 ROOT = Path(__file__).resolve().parents[3]
@@ -33,7 +34,14 @@ def test_hedging_dataset_creation_pipeline(monkeypatch, tmp_path):
 
     monkeypatch.setattr(hl.anthropic, "AsyncAnthropic", lambda api_key=None: DummyClient())
 
-    result = asyncio.run(hl.sentence_labeller(sentences_df, hl.get_hedging_on_sentence, "isHedge", semaphore=asyncio.Semaphore(10)))
+    # Test hedging labeller
+    result_hedging = asyncio.run(hl.sentence_labeller(sentences_df, hl.get_hedging_on_sentence, "isHedge", semaphore=asyncio.Semaphore(10)))
 
-    assert "sentence" in result.columns
-    assert "isHedge" in result.columns
+    assert "sentence" in result_hedging.columns
+    assert "isHedge" in result_hedging.columns
+
+    # Test topic labeller
+    result_topic = asyncio.run(hl.sentence_labeller(sentences_df, tc.get_topic_on_sentences, "topic", semaphore=asyncio.Semaphore(10)))
+
+    assert "sentence" in result_topic.columns
+    assert "topic" in result_topic.columns

@@ -6,12 +6,12 @@ def get_topic_on_sentences(sentences):
         raise TypeError("sentences must be a list of strings")
 
     formatted_sentences = "\n".join(
-        f"- {str(sentence)}" for sentence in sentences
+        [f"{i + 1}. {sentence}" for i, sentence in enumerate(sentences)]
     )
     formatted_sentences = textwrap.indent(formatted_sentences, '    ')
     prompt = f"""You are a financial language expert specialising in earnings call analysis.
     
-    Your job is to label sentences as belonging to a specific topic, given a list of 10 topics. 
+    Your job is to label sentences as belonging to a specific topic, given a list of 11 topics. 
     
     TOPICS:
     1. Financial performance (revenue, EPS, margins, guidance, cash flow)
@@ -24,18 +24,23 @@ def get_topic_on_sentences(sentences):
     8. Macro & geopolitics (trade policy, export controls, FX, demand environment)
     9. Customers & partners (enterprise deals, hyperscalers, partnerships, verticals)
     10. ESG & governance (sustainability, regulation, workforce, ethics)
+    11. Junk / non-substantive (greetings, filler transitions, analyst politeness statements, irrelevant statements)
     
     EXAMPLES:
-    We delivered revenue of $35.1 billion, up 17% year over year, driven by strong performance across all segments. (Label = 1)
-    The Ryzen 9000 series saw strong attach rates in the enthusiast desktop segment, gaining roughly 4 points of unit share. (Label = 2)
-    CoWoS packaging capacity constraints at TSMC continue to limit our ability to fulfil demand for H100 modules. (Label = 5)
-    The October 2023 export control regulations continue to restrict our ability to sell A800 and H800 products to customers in China. (Label = 8)
-    We reduced our Scope 1 and Scope 2 carbon emissions by 18% year over year, ahead of our 2025 target. (Label = 10)
-    Our partnership with SAP to embed Joule AI across the S/4HANA suite is now live at over 200 enterprise customers. (Label = 9)
-    Google Cloud reached a $12 billion annualised run rate, with infrastructure and platform services driving the majority of growth. (Label = 3)
-    Our AI-powered security portfolio, including Cisco AI Defense, grew bookings 40% in the quarter. (Label = 4)
-    We are seeing increased price competition in the commodity NAND market as Chinese manufacturers expand capacity. (Label = 6)
-    Project Stargate represents a multi-year bet on optical interconnect technology that we believe will define the post-copper era. (Label = 7)
+    - We delivered revenue of $35.1 billion, up 17% year over year, driven by strong performance across all segments. (Label = 1)
+    - The Ryzen 9000 series saw strong attach rates in the enthusiast desktop segment, gaining roughly 4 points of unit share. (Label = 2)
+    - CoWoS packaging capacity constraints at TSMC continue to limit our ability to fulfil demand for H100 modules. (Label = 5)
+    - The October 2023 export control regulations continue to restrict our ability to sell A800 and H800 products to customers in China. (Label = 8)
+    - We reduced our Scope 1 and Scope 2 carbon emissions by 18% year over year, ahead of our 2025 target. (Label = 10)
+    - Our partnership with SAP to embed Joule AI across the S/4HANA suite is now live at over 200 enterprise customers. (Label = 9)
+    - Google Cloud reached a $12 billion annualised run rate, with infrastructure and platform services driving the majority of growth. (Label = 3)
+    - Our AI-powered security portfolio, including Cisco AI Defense, grew bookings 40% in the quarter. (Label = 4)
+    - We are seeing increased price competition in the commodity NAND market as Chinese manufacturers expand capacity. (Label = 6)
+    - Project Stargate represents a multi-year bet on optical interconnect technology that we believe will define the post-copper era. (Label = 7)
+    - Thank you and welcome to NVIDIA's first quarter fiscal 2025 earnings call. (Label = 11)
+    - Our next question comes from the line of John Smith at Goldman Sachs. (Label = 11)
+    - Yes. (Label = 11)
+    - Absolutely (Label =  11)
     
     AMBIGUOUS EXAMPLES:
     These sentences could fit multiple topics. Use the tiebreaker rules (outlined after this section) to assign the correct label.
@@ -56,6 +61,8 @@ def get_topic_on_sentences(sentences):
     ANSWER FORMAT:
     - do NOT give any explanation, punctuation or extra text. just comma-separated labels
     - give your labels to each sentence in the form "1,4,3,5,9,..." (comma-separated and without any spacing) in the order they are given to you 
+    - EVERY sentence must receive exactly ONE label, even single-word or very short sentences.
+    - You MUST return exactly {len(sentences)} comma-separated labels. No more, no less.
     
     SENTENCES TO LABEL:
 {formatted_sentences}

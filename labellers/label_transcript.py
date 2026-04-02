@@ -5,8 +5,9 @@ from pathlib import Path
 
 import pandas as pd
 
-from labellers.hedging_labeller import sentence_labeller
+from labellers.sentence_classifier import sentence_labeller
 from labellers.sentence_tokenizer import sentence_tokenizer
+from labellers.topic_classifier import get_topic_on_sentences
 from speech_parser.transcript_parser import parse_transcript_to_data
 
 
@@ -42,12 +43,11 @@ async def label_transcript(
 
     csv_path = Path("data") / output_folder / company / f"{file_name}.csv"
     if csv_path.exists():
-        return
+        return None
 
     transcript_data = parse_transcript_to_data(str(transcript_file))
 
     sentences_df = pd.DataFrame(sentence_tokenizer(transcript_data))
-
     classified_sentences = await sentence_labeller(
         sentences_df,
         get_prompt,
@@ -62,7 +62,7 @@ async def label_transcript(
 
 async def label_transcript_with_hedging(transcript_path: str | Path):
     """Label transcript sentences for hedging language."""
-    from labellers.hedging_labeller import get_hedging_on_sentence
+    from labellers.sentence_classifier import get_hedging_on_sentence
 
     return await label_transcript(
         transcript_path,
@@ -74,7 +74,7 @@ async def label_transcript_with_hedging(transcript_path: str | Path):
 
 async def label_transcript_with_topics(transcript_path: str | Path):
     """Label transcript sentences by topic."""
-    from sentence_topic_classifier.topic_classifier import get_topic_on_sentences
+    from labellers.topic_classifier import get_topic_on_sentences
 
     return await label_transcript(
         transcript_path,

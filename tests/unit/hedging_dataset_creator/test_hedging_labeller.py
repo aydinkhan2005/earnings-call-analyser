@@ -4,7 +4,7 @@ from types import SimpleNamespace
 import pandas as pd
 import pytest
 
-from labellers import hedging_labeller as hl
+from labellers import sentence_classifier as hl
 
 
 @pytest.mark.parametrize("bad_input", [None, [], {"sentence": ["text"]}, "text"])
