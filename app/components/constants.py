@@ -1,0 +1,10 @@
+topic = ['Financial Performance',
+         'Products & Hardware',
+         'Cloud & Infrastructure',
+         'AI & Software',
+         'Supply Chain & Ops',
+         'Market & Competition',
+         'R&D and Innovation',
+         'Macro & Geopolitics',
+         'Customers & Partners',
+         'ESG & Governance']

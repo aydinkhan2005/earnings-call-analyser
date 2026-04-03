@@ -1,10 +1,8 @@
-import pandas as pd
-import plotly.express as px
 import streamlit as st
 import os
-
-from components.sidebar import render_sidebar_styles
 from utils.fetch_transcript import fetch_transcript
+from components.topic_bar_chart import render_topic_bar_chart
+from components.sidebar import render_sidebar_styles
 from components.hedging_breakdown import render_hedging_breakdown
 from components.stock_chart import render_stock_chart
 from components.sidebar import render_sidebar
@@ -35,7 +33,6 @@ with st.sidebar:
     st.divider()
     ticker, quarter, year = take_input()
 
-# if user is prompting to see info about a particular company, show it
 if ticker != PLACEHOLDER and year != PLACEHOLDER and quarter != PLACEHOLDER:
     transcript = fetch_transcript(ticker, quarter, year)
     with sidebar_placeholder.container():
@@ -46,17 +43,7 @@ if ticker != PLACEHOLDER and year != PLACEHOLDER and quarter != PLACEHOLDER:
     with row1_col1:
         render_stock_chart(ticker, quarter, year)
     with row2_col2:
-        # Sample data
-        df = pd.DataFrame({
-            "Category": ["A", "B", "C"],
-            "Values": [10, 20, 15]
-        })
-
-        # Create bar chart
-        fig = px.bar(df, y="Category", x="Values", title='Top 5 Topics')
-
-        # Render in Streamlit
-        st.plotly_chart(fig)
+        render_topic_bar_chart(transcript)
     with row1_col2:
         render_hedging_breakdown(transcript)
     with row2_col1:

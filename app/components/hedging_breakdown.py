@@ -7,7 +7,7 @@ import pandas as pd
 from labellers.sentence_tokenizer import sentence_tokenizer
 
 
-PIPELINE_PATH = Path(__file__).resolve().parents[2] / "models" / "tfidf_lr.pkl"
+PIPELINE_PATH = Path(__file__).resolve().parents[2] / "models" / "hedging_classifier.pkl"
 
 
 def _render_colored_metric(col, label: str, rate_value: float | str):
