@@ -22,12 +22,12 @@ def _render_colored_metric(col, label: str, rate_value: float | str):
     elif rate_num > 25:
         color = "orange"
     else:
-        color = "white"
+        color = "black"
 
     col.markdown(
         f"""
         <div>
-            <div style='font-size: 14px; color: white;'>{label}</div>
+            <div style='font-size:14px; font-weight: 800;letter-spacing:.14em;text-transform:uppercase;color: black;margin-top:.30rem;display:flex;align-items:center;gap:.4rem'>{label}</div>
             <div style='font-size: 32px; color: {color}; font-weight: bold;'>{rate_value}</div>
         </div>
         """,
@@ -75,14 +75,14 @@ def render_hedging_breakdown(transcript):
     qa_mask = sentences_with_preds["section"] == 0
     qa_rows = sentences_with_preds.loc[qa_mask, "isHedge"]
 
-    st.subheader("Hedging Rate Breakdown")
+    st.markdown("<h2 style='color: #5C5C5C'>Hedging Rate Breakdown</h2>", unsafe_allow_html=True)
     col11, col12 = st.columns(2)
 
     if len(presentation_rows) > 0:
         pres_hedge_rate = 100 * float((presentation_rows == 1).mean())
-        _render_colored_metric(col11, "Presentation", f"{pres_hedge_rate:.1f}%")
+        _render_colored_metric(col11, "PRESENTATION", f"{pres_hedge_rate:.1f}%")
     else:
-        _render_colored_metric(col11, "Presentation", "N/A")
+        _render_colored_metric(col11, "PRESENTATION", "N/A")
 
     if len(qa_rows) > 0:
         qa_hedge_rate = 100 * float((qa_rows == 1).mean())
@@ -96,7 +96,7 @@ def render_hedging_breakdown(transcript):
         'role-hedges': []
     }
     st.write("")
-    st.subheader("Hedging Rate By Role")
+    st.markdown("<h2 style='color: #5C5C5C'>Hedging Rate By Role</h2>", unsafe_allow_html=True)
     valid_role_rows = sentences_with_preds[sentences_with_preds["Role"].astype(str).str.strip() != ""]
     if len(valid_role_rows) == 0:
         st.info("No role data available for hedging-rate breakdown.")

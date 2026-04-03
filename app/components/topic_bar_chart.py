@@ -87,4 +87,21 @@ def render_topic_bar_chart(transcript):
         labels={"topic_name": "Topic", "frequency": "Frequency"},
         category_orders={"topic_name": top_5_topic_freqs["topic_name"].tolist()},
     )
+    fig.update_layout(
+        plot_bgcolor="#1e1e1e",  # chart background
+        paper_bgcolor="#1e1e1e",  # outer background
+        font_color="white",
+        title=dict(
+            text="TOP 5 MOST MENTIONED TOPICS",
+            x=0.5,              # centers it (0 = left, 1 = right)
+            xanchor="center",
+            font=dict(
+                size=20,
+                color="white",
+                family="Consolas",  # or "Courier New", "Times New Roman", etc.
+                weight="normal",
+            )
+        ),
+    )
+    fig.update_traces(marker_color="#e09040")
     st.plotly_chart(fig, use_container_width=True)

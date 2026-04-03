@@ -75,5 +75,22 @@ def render_stock_chart(ticker, quarter, year):
         return
 
     fig = _build_stock_figure(hist, ticker)
-    fig.update_layout(autosize=True)
+    fig.update_layout(
+        plot_bgcolor="#1e1e1e",  # chart background
+        paper_bgcolor="#1e1e1e",  # outer background
+        font_color="white",
+        title=dict(
+            text=f'VALUATION HISTORY FOR {ticker}',
+            x=0.5,  # centers it (0 = left, 1 = right)
+            xanchor="center",
+            font=dict(
+                size=20,
+                color="white",
+                family="Consolas",  # or "Courier New", "Times New Roman", etc.
+                weight="normal",
+            )
+        ),
+        autosize=True
+    )
+    fig.update_traces(marker_color="#e09040")
     st.plotly_chart(fig, use_container_width=True)

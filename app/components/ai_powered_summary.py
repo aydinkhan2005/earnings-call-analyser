@@ -23,7 +23,13 @@ def summarise_with_ai():
 - If the data is insufficient to form a view, say "Insufficient data to provide a conclusion".
 - Do NOT say anything like "As an AI language model..." or "Based on the data...".
 - You MUST act speak as if you have the aforementioned role and NOT an AI language model.
-    
+- Do NOT write any headers or subheaders. Only body text with your interpretation and conclusion.
+- Rather than speaking in full normal sentences, make your points in concise bullet form, with no more than 2 sentences per bullet.
+- Each bullet should be in the form "metric. insight from that metric".
+- Do NOT use any markdown syntax such as asterisks. ONLY PLAIN TEXT.
+- When giving your verdict, write it in the form "Verdict: <your verdict>".
+- Do NOT write anything after your verdict. No reasoning or anything.
+
 ## HEDGE METRICS (% by section)
 - Presentation = {st.session_state['hedge-metrics']['presentation-hedge']:.2f}
 - Q&A = {st.session_state['hedge-metrics']['qa-hedge']:.2f}
@@ -51,4 +57,7 @@ def summarise_with_ai():
     response_text = "".join(
         block.text for block in response.content if hasattr(block, "text")
     ).strip()
-    st.write(response_text)
+    paragraphs = response_text.split("\n\n") #  Split on double newlines
+    styled_text = "".join(f"<p style='font-size:14px;color:black; font-weight: 400;line-height:1.6;margin-bottom:1.25rem'>{p}</p>" for p in paragraphs)
+    st.markdown('<h2 style="font-size: 32px; color:black; font-weight: 400;line-height:1.6;">AI SUMMARY</h2>', unsafe_allow_html=True)
+    st.markdown(styled_text, unsafe_allow_html=True)
