@@ -76,7 +76,7 @@ def render_topic_bar_chart(transcript):
 
     top_5_topic_freqs = topic_freqs.head(5).copy()
     top_5_topic_freqs["topic_name"] = top_5_topic_freqs["topic"].map(_topic_label_from_id)
-
+    st.session_state['topics'] = list(zip(top_5_topic_freqs["topic_name"], top_5_topic_freqs["frequency"]))
     assert all(0 < p <= len(topic) for p in predictions), \
         f"Prediction indices out of range. Expected 1–{len(topic)}, got: {set(predictions)}"
     fig = px.bar(

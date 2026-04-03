@@ -1,6 +1,7 @@
 import streamlit as st
 import os
 from utils.fetch_transcript import fetch_transcript
+from components.ai_powered_summary import summarise_with_ai
 from components.topic_bar_chart import render_topic_bar_chart
 from components.sidebar import render_sidebar_styles
 from components.hedging_breakdown import render_hedging_breakdown
@@ -47,4 +48,4 @@ if ticker != PLACEHOLDER and year != PLACEHOLDER and quarter != PLACEHOLDER:
     with row1_col2:
         render_hedging_breakdown(transcript)
     with row2_col1:
-        st.subheader('Per-Quarter Breakdown')
+        summarise_with_ai()

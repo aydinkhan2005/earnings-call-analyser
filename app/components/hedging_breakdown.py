@@ -79,8 +79,8 @@ def render_hedging_breakdown(transcript):
     col11, col12 = st.columns(2)
 
     if len(presentation_rows) > 0:
-        hedge_rate = 100 * float((presentation_rows == 1).mean())
-        _render_colored_metric(col11, "Presentation", f"{hedge_rate:.1f}%")
+        pres_hedge_rate = 100 * float((presentation_rows == 1).mean())
+        _render_colored_metric(col11, "Presentation", f"{pres_hedge_rate:.1f}%")
     else:
         _render_colored_metric(col11, "Presentation", "N/A")
 
@@ -89,6 +89,12 @@ def render_hedging_breakdown(transcript):
         _render_colored_metric(col12, "Q&A", f"{qa_hedge_rate:.1f}%")
     else:
         _render_colored_metric(col12, "Q&A", "N/A")
+
+    st.session_state['hedge-metrics'] = {
+        'presentation-hedge': pres_hedge_rate,
+        'qa-hedge': qa_hedge_rate,
+        'role-hedges': []
+    }
     st.write("")
     st.subheader("Hedging Rate By Role")
     valid_role_rows = sentences_with_preds[sentences_with_preds["Role"].astype(str).str.strip() != ""]
@@ -108,10 +114,12 @@ def render_hedging_breakdown(transcript):
 
             role_1, role_1_rate = role_items[i]
             _render_colored_metric(col21, role_1, f"{role_1_rate:.1f}%")
+            st.session_state['hedge-metrics']['role-hedges'].append((role_1, role_1_rate))
 
             if i + 1 < len(role_items):
                 role_2, role_2_rate = role_items[i + 1]
                 _render_colored_metric(col22, role_2, f"{role_2_rate:.1f}%")
+                st.session_state['hedge-metrics']['role-hedges'].append((role_2, role_2_rate))
             else:
                 col22.metric("", "")
 
