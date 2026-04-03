@@ -7,6 +7,9 @@ from components.sidebar import render_sidebar_styles
 from components.hedging_breakdown import render_hedging_breakdown
 from components.stock_chart import render_stock_chart
 from components.sidebar import render_sidebar
+import nltk
+nltk.download('punkt', quiet=True)
+nltk.download('punkt_tab', quiet=True)
 PLACEHOLDER = "-- select an option --"
 st.markdown(
     """
