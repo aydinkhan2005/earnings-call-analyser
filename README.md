@@ -24,6 +24,18 @@
   <li>An <b>AI powered summary</b> which gives a recommendation to the user on whether to invest, acting as a financial analyst and earnings call language expert.</li>
   <li>The top 5 most mentioned topics in the earnings call. This gives an idea of what the company is currently focused on.</li>
 </ul>
+<h2>Process From User Input To Output</h2>
+<br>
+<div align="center"><img src="inference_pipeline.drawio.svg"/></div>
+<div align="center">
+  <table>
+    <tr>
+      <td>🟨 Dashboard UI & Output</td>
+      <td>🟪 Data / NLP</td>
+      <td>🟦 ML models</td>
+    </tr>
+  </table>
+</div>
 <h2>Data Sources</h2>
 Earnings call transcripts sourced from Earnings Calls Transcripts - NASDAQ - 2016-2020 on Kaggle.
 Originally from Thomson Reuters. See data/LICENSE for full license details.
