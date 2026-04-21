@@ -5,3 +5,4 @@ __pycache__/
 *.pyc
 data/processed
 data/hedging_dataset
+data/topic_dataset

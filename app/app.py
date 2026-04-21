@@ -93,7 +93,7 @@ st.markdown(
     """,
     unsafe_allow_html=True
 )
-st.metric(label="EARNINGS CALL ANALYSIS", value='SENTIMENT OVERVIEW')
+st.metric(label="EARNINGS CALL ANALYSIS", value='LANGUAGE OVERVIEW')
 st.markdown(
     """
     <style>
