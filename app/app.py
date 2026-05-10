@@ -7,6 +7,7 @@ from components.sidebar import render_sidebar_styles
 from components.hedging_breakdown import render_hedging_breakdown
 from components.stock_chart import render_stock_chart
 from components.sidebar import render_sidebar
+from components.follow_up_qa import render_follow_up_qa
 import nltk
 nltk.download('punkt', quiet=True)
 nltk.download('punkt_tab', quiet=True)
@@ -89,6 +90,26 @@ st.markdown(
         letter-spacing:.14em;
         font-weight: 600;
     }
+    [data-testid="stSpinner"] p {
+    color: black;
+    }
+    </style>
+    """,
+    unsafe_allow_html=True
+)
+st.markdown(
+    """
+    <style>
+    /* Chat messages */
+    [data-testid="stChatMessage"] {
+        background-color: black;
+        color: black;
+    }
+
+    /* Chat input box */
+    [data-testid="stChatInput"] textarea {
+        color: white;
+    }
     </style>
     """,
     unsafe_allow_html=True
@@ -138,3 +159,4 @@ if ticker != PLACEHOLDER and year != PLACEHOLDER and quarter != PLACEHOLDER:
         render_hedging_breakdown(transcript)
     with row2_col1:
         summarise_with_ai()
+    render_follow_up_qa(transcript)

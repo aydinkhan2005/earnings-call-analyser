@@ -6,3 +6,4 @@ __pycache__/
 data/processed
 data/hedging_dataset
 data/topic_dataset
+chroma_store/
