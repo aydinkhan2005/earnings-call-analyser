@@ -1,5 +1,14 @@
 <h1> ▌EARNINGSSENSE — Analysing Executive Speech</h1>
-<span><img src="https://img.shields.io/badge/Anthropic-blue?style=for-the-badge" alt="Anthropic API"> <img src="https://img.shields.io/badge/NLTK-orange?style=for-the-badge" alt="NLTK"> <img src="https://img.shields.io/badge/Streamlit-red?style=for-the-badge" alt="streamlit"> <img src="https://img.shields.io/badge/pytest-yellow?style=for-the-badge" alt="pytest"> <img src="https://img.shields.io/badge/yfinance-darkgreen?style=for-the-badge" alt="yfinance"> <img src="https://img.shields.io/badge/plotly-green?style=for-the-badge" alt="plotly"></span>
+<span><img src="https://img.shields.io/badge/Anthropic-blue?style=for-the-badge" alt="Anthropic API"> 
+<img src="https://img.shields.io/badge/HuggingFace-FFD21E?style=for-the-badge&logo=huggingface&logoColor=black" alt="HuggingFace">
+<img src="https://img.shields.io/badge/Sentence_Transformers-FF6F00?style=for-the-badge" alt="Sentence Transformers">
+<img src="https://img.shields.io/badge/ChromaDB-006AFF?style=for-the-badge" alt="ChromaDB">
+<img src="https://img.shields.io/badge/Streamlit-red?style=for-the-badge" alt="streamlit">
+<img src="https://img.shields.io/badge/pytest-yellow?style=for-the-badge" alt="pytest"> 
+<img src="https://img.shields.io/badge/yfinance-darkgreen?style=for-the-badge" alt="yfinance"> 
+<img src="https://img.shields.io/badge/plotly-green?style=for-the-badge" alt="plotly">
+<img src="https://img.shields.io/badge/NLTK-orange?style=for-the-badge" alt="NLTK">
+</span>
 
 <h2>Overview</h2>
 <p><strong>EARNINGSSENSE</strong> prompts the user to select:</p>
@@ -24,6 +33,11 @@
   <li>An <b>AI powered summary</b> which gives a recommendation to the user on whether to invest, acting as a financial analyst and earnings call language expert.</li>
   <li>The top 5 most mentioned topics in the earnings call. This gives an idea of what the company is currently focused on.</li>
 </ul>
+<img src="earnings_call_analyser_dashboard_rag.png">
+<p>A <b>follow-up questions</b> system is also in place for the user to ask additional questions about the earnings call
+to which an AI will reply. To minimise token costs from passing in context to the LLM, <b>Retrieval Augmented Generation</b>
+is used alongside a <b>sentence transformer from Hugging Face</b> and ChromaDB to store the embeddings of transcripts.
+This system only passes in the most relevant part of a transcript to an LLM for context to answer the user's queries.</p>
 <h2>Installation</h2>
 
 <pre><code>git clone https://github.com/aydinkhan2005/earnings-call-analyser.git

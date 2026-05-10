@@ -8,3 +8,5 @@ yfinance
 plotly==6.6.0
 streamlit
 scikit-learn
+sentence-transformers
+chromadb
